@@ -252,3 +252,292 @@ async def process_upload(
             },
         )
     return _pipeline_response(image)
+
+
+# ===========================================================================
+# Bank statements — the second ingestion channel
+# ===========================================================================
+#
+# Documents come in through OCR above; account data comes in here. Both
+# converge on the same domain records, and the statement path carries a check
+# the OCR path cannot: a statement asserts its own running balance, so a
+# mis-parse is detectable from the file alone.
+
+from datetime import date, timedelta  # noqa: E402
+
+from app.services.ingestion.bank_api_client import (  # noqa: E402
+    HttpStatementProvider,
+    LocalReferenceProvider,
+    ProviderError,
+    RateCapExceeded,
+    SyncEngine,
+)
+from app.services.ingestion.statement_generator import (  # noqa: E402
+    Dialect,
+    generate_statement,
+)
+from app.services.ingestion.statement_parser import (  # noqa: E402
+    StatementParseError,
+    ingest_statement,
+    parse_statement,
+)
+
+# Module-level so the rate cap and idempotency cache actually persist between
+# requests. A per-request engine would reset the counter every call, which is
+# the same as having no cap at all.
+SYNC_ENGINE = SyncEngine()
+
+STATEMENT_SAMPLE_SEED = 5
+STATEMENT_SAMPLE_ROWS = 45
+
+
+@router.get("/ingestion/statements/dialects", tags=["ingestion"])
+def list_statement_dialects(user: TokenPayload = Depends(current_user)) -> dict[str, Any]:
+    """The bank layouts the parser is exercised against.
+
+    Listed because "handles any bank" is a claim, and this is the set on which
+    it is actually tested. Every one of these produces an identical ledger from
+    the same seed, which is what the cross-dialect test asserts.
+    """
+    return {
+        "dialects": [
+            {
+                "id": d.value,
+                "description": desc,
+            }
+            for d, desc in (
+                (Dialect.SIMPLE_DEBIT_CREDIT,
+                 "two amount columns, dd/mm/yyyy, header on row 1"),
+                (Dialect.SIGNED_AMOUNT,
+                 "one signed amount column, dd-Mon-yyyy dates"),
+                (Dialect.AMOUNT_WITH_DR_CR_FLAG,
+                 "one positive amount column plus a separate Dr/Cr indicator"),
+                (Dialect.INDIAN_BANK_PREAMBLE,
+                 "account preamble above the header, ISO dates, lakh grouping, "
+                 "trailing 'Cr' on the balance"),
+                (Dialect.US_NO_BALANCE,
+                 "mm/dd/yyyy, parenthesised negatives, NO balance column — so the "
+                 "reconciliation check is unavailable and says so"),
+                (Dialect.AMBIGUOUS_MMDD,
+                 "every day <= 12, so dd/mm and mm/dd both parse; resolved by the "
+                 "column's chronological order"),
+            )
+        ],
+        "note": (
+            "The column mapping is chosen by whichever assignment satisfies the "
+            "running-balance identity, not by header names — which is why a "
+            "statement with swapped Debit/Credit headers still parses correctly."
+        ),
+    }
+
+
+@router.get("/ingestion/statements/sample", tags=["ingestion"])
+def statement_sample(
+    dialect: Dialect = Query(Dialect.SIMPLE_DEBIT_CREDIT),
+    user: TokenPayload = Depends(current_user),
+) -> dict[str, Any]:
+    """A generated statement in the requested dialect, with its ground truth."""
+    truth, text = generate_statement(
+        seed=STATEMENT_SAMPLE_SEED, dialect=dialect, n_rows=STATEMENT_SAMPLE_ROWS
+    )
+    return {
+        "dialect": dialect.value,
+        "csv": text,
+        "truth": {
+            "n_rows": len(truth.rows),
+            "total_debits": float(truth.total_debits),
+            "total_credits": float(truth.total_credits),
+            "opening_balance": float(truth.opening_balance),
+            "closing_balance": float(truth.closing_balance),
+            "date_format": truth.date_format,
+        },
+        "note": "Truth is returned so the UI can score the parse. The parser never sees it.",
+    }
+
+
+def _statement_response(text: str, account_reference: str) -> dict[str, Any]:
+    """Parse, then describe every stage — including a refusal."""
+    try:
+        result, inflows, outflows = ingest_statement(
+            text, business_id=DEMO_BUSINESS, account_reference=account_reference
+        )
+    except StatementParseError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error_code": "unparseable_statement",
+                "message": str(exc),
+                "details": {},
+            },
+        )
+
+    return {
+        "mapping": {
+            "convention": result.convention,
+            "date_format": result.date_format,
+            "columns": [a.model_dump() for a in result.column_assignments],
+        },
+        "reconciliation": result.reconciliation.model_dump(),
+        "totals": {
+            "n_rows": len(result.rows),
+            "total_debits": float(result.total_debits),
+            "total_credits": float(result.total_credits),
+            "opening_balance": (
+                float(result.opening_balance) if result.opening_balance is not None else None
+            ),
+            "closing_balance": (
+                float(result.closing_balance) if result.closing_balance is not None else None
+            ),
+        },
+        "rows": [r.model_dump(mode="json") for r in result.rows[:200]],
+        "records": {
+            "n_inflows": len(inflows),
+            "n_outflows": len(outflows),
+            "sample_inflows": [i.model_dump(mode="json") for i in inflows[:5]],
+            "sample_outflows": [o.model_dump(mode="json") for o in outflows[:5]],
+        },
+        "rejected": result.rejected,
+        "rejection_reason": result.rejection_reason,
+        "warnings": result.warnings,
+    }
+
+
+@router.post("/ingestion/statements/parse", tags=["ingestion"])
+async def parse_statement_upload(
+    file: UploadFile = File(...),
+    account_reference: str = Query("UPLOAD"),
+    user: TokenPayload = Depends(current_user),
+) -> dict[str, Any]:
+    """Parse an uploaded bank statement CSV into domain records.
+
+    A statement that fails its own running-balance identity comes back with
+    `rejected = true` and no records, rather than as a ledger the optimizer
+    would treat as fact.
+    """
+    raw = await file.read()
+    if not raw:
+        raise HTTPException(
+            status_code=400,
+            detail={"error_code": "empty_upload", "message": "no file data",
+                    "details": {}},
+        )
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        text = raw.decode("latin-1")
+    return _statement_response(text, account_reference)
+
+
+@router.post("/ingestion/statements/sync", tags=["ingestion"])
+def sync_statements(
+    dialect: Dialect = Query(Dialect.SIMPLE_DEBIT_CREDIT),
+    days: int = Query(60, ge=1, le=365),
+    page_size: int = Query(25, ge=5, le=200),
+    n_rows: int = Query(60, ge=1, le=500),
+    base_url: Optional[str] = Query(
+        None,
+        description="Point at a real statement API. Omitted -> the in-process "
+                    "reference provider, which is labelled as such in the response.",
+    ),
+    api_key: Optional[str] = Query(None),
+    user: TokenPayload = Depends(current_user),
+) -> dict[str, Any]:
+    """Pull a statement window over the API channel, then parse it.
+
+    With no `base_url` this runs against `LocalReferenceProvider` — real
+    pagination, real rate-cap accounting, real idempotency, over data this repo
+    generates. The response's `provider_kind` says `local_reference` so it can
+    never be read as evidence of a live bank integration.
+
+    Supply `base_url` and the same code path speaks real HTTP to it.
+    """
+    until = date.today()
+    since = until - timedelta(days=days)
+
+    provider = (
+        HttpStatementProvider(base_url, api_key=api_key)
+        if base_url
+        else LocalReferenceProvider(
+            seed=STATEMENT_SAMPLE_SEED, dialect=dialect,
+            n_rows=n_rows, page_size=page_size,
+        )
+    )
+
+    try:
+        result, inflows, outflows = SYNC_ENGINE.sync(
+            provider, business_id=DEMO_BUSINESS, account_reference="DEMO-ACCOUNT",
+            since=since, until=until,
+        )
+    except RateCapExceeded as exc:
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "error_code": "rate_cap_exceeded",
+                "message": str(exc),
+                "details": SYNC_ENGINE.rate_cap.status(
+                    f"{provider.name}:{DEMO_BUSINESS}"
+                ).model_dump(mode="json"),
+            },
+        )
+    except ProviderError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "error_code": "provider_unavailable",
+                "message": str(exc),
+                "details": {"provider": provider.name},
+            },
+        )
+
+    payload = result.model_dump(mode="json")
+    payload["records"] = {
+        "n_inflows": len(inflows),
+        "n_outflows": len(outflows),
+        "sample_inflows": [i.model_dump(mode="json") for i in inflows[:5]],
+        "sample_outflows": [o.model_dump(mode="json") for o in outflows[:5]],
+    }
+    return payload
+
+
+@router.get("/ingestion/providers", tags=["ingestion"])
+def list_providers(user: TokenPayload = Depends(current_user)) -> dict[str, Any]:
+    """What can be pulled from, and what is honestly behind each one."""
+    return {
+        "providers": [
+            {
+                "name": "local_reference",
+                "kind": "local_reference",
+                "available": True,
+                "description": (
+                    "Serves statements from this repository's own generator, "
+                    "in-process. Exercises pagination, rate capping and "
+                    "idempotency for real. It is NOT a bank."
+                ),
+            },
+            {
+                "name": "http_open_banking",
+                "kind": "http_open_banking",
+                "available": True,
+                "description": (
+                    "Real HTTP client — cursor pagination, idempotency keys, "
+                    "rolling-window rate cap, exponential backoff with full "
+                    "jitter honouring Retry-After. Pass base_url to use it. "
+                    "Tested against a live local server over a real socket."
+                ),
+            },
+            {
+                "name": "decentro / plaid",
+                "kind": None,
+                "available": False,
+                "description": (
+                    "Not implemented. No credentials exist for this project, and "
+                    "a connector that cannot be executed would be worse than "
+                    "absent. HttpStatementProvider is the integration point."
+                ),
+            },
+        ],
+        "rate_cap_default": {
+            "calls_allowed": SYNC_ENGINE.rate_cap.calls_allowed,
+            "window_days": SYNC_ENGINE.rate_cap.window_days,
+        },
+    }

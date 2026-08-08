@@ -24,11 +24,21 @@ reports Runway-at-Risk and CRaR: the liquidity analogues of VaR and CVaR,
 computed from per-counterparty fitted payment-delay distributions coupled by a
 Student-t copula.
 
+**`GET /api/v1/risk/bankruptcy`** reports the probability the business itself
+fails over a horizon — a first-passage probability, calibrated against realized
+outcomes, and not to be confused with the *counterparty* default probabilities
+under `/risk/models`.
+
+Ingestion has two channels: receipt OCR (`/ingestion/receipts/*`) and bank
+statements (`/ingestion/statements/*`), the latter either uploaded or pulled
+over the API channel. Both converge on the same domain records.
+
 Endpoints tagged *(not implemented)* return HTTP 501 with a stated reason.
 They route, authenticate and validate correctly, but nothing behind them is
 faked — no canned text, no placeholder numbers.
 
-Get a token from `POST /api/v1/auth/token` and authorize with it.
+Sign up at `POST /api/v1/auth/signup` or sign in at `POST /api/v1/auth/login`,
+then authorize with the returned bearer token.
 """
 
 

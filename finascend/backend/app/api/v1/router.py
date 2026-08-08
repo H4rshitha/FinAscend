@@ -303,6 +303,96 @@ def uncertainty_model(user: TokenPayload = Depends(current_user)) -> dict[str, A
 
 
 # ---------------------------------------------------------------------------
+# bankruptcy / insolvency risk (A.7)
+# ---------------------------------------------------------------------------
+
+@lru_cache(maxsize=2)
+def _ruin_calibration(n_businesses: int = 500, n_iterations: int = 1_500):
+    """Cached because calibration is a property of the METHOD, not of a business.
+
+    Recomputing it per request would be both slow and misleading about what it
+    measures — it would suggest the number describes the business being
+    scored, when it describes whether the estimator's probabilities are honest
+    across a population.
+    """
+    from app.services.quant_core.bankruptcy_risk import validate_ruin_calibration
+
+    return validate_ruin_calibration(
+        n_businesses=n_businesses, n_iterations=n_iterations, seed=DEMO_SEED,
+        parameter_uncertainty=True,
+    )
+
+
+@router.get("/risk/bankruptcy", tags=["risk"])
+def bankruptcy_risk(
+    include_calibration: bool = Query(
+        True, description="Attach the method's measured calibration."
+    ),
+    total_assets: Optional[float] = Query(None, gt=0),
+    total_liabilities: Optional[float] = Query(None, gt=0),
+    current_assets: Optional[float] = Query(None, ge=0),
+    current_liabilities: Optional[float] = Query(None, ge=0),
+    retained_earnings: Optional[float] = Query(None),
+    ebit: Optional[float] = Query(None),
+    user: TokenPayload = Depends(current_user),
+) -> dict[str, Any]:
+    """P(the business itself fails), plus an optional balance-sheet view.
+
+    The cash-flow view always computes — it reads the same Monte Carlo paths
+    that back `/simulation/runway-at-risk`. The Altman Z''-score computes only
+    when the balance-sheet inputs are supplied as query parameters; omit them
+    and the response omits the score rather than inventing one.
+
+    This is the business's own failure probability. It is NOT the counterparty
+    default probability served by `/risk/models` and `/risk/{id}/explain`.
+    """
+    from app.services.quant_core.bankruptcy_risk import (
+        BalanceSheet,
+        assess_bankruptcy_risk,
+    )
+
+    paths, _rar, _spec = _simulation()
+    v = _view()
+
+    balance_sheet = None
+    supplied = (total_assets, total_liabilities, current_assets,
+                current_liabilities, retained_earnings, ebit)
+    if any(x is not None for x in supplied):
+        balance_sheet = BalanceSheet(
+            total_assets=total_assets or 0.0,
+            total_liabilities=total_liabilities or 0.0,
+            current_assets=current_assets or 0.0,
+            current_liabilities=current_liabilities or 0.0,
+            retained_earnings=retained_earnings,
+            ebit=ebit,
+        )
+
+    risk = assess_bankruptcy_risk(
+        paths.balances,
+        as_of=v.as_of,
+        random_seed=paths.seed,
+        balance_sheet=balance_sheet,
+        calibration=_ruin_calibration() if include_calibration else None,
+    )
+    return risk.model_dump()
+
+
+@router.get("/risk/bankruptcy/calibration", tags=["risk"])
+def bankruptcy_calibration(user: TokenPayload = Depends(current_user)) -> dict[str, Any]:
+    """Are the ruin probabilities honest? Measured against realized outcomes."""
+    c = _ruin_calibration()
+    return {
+        **c.model_dump(),
+        "how_to_read": (
+            "brier_skill_score > 0 means the model beats predicting the base rate "
+            "for everyone; roc_auc > 0.5 means it can rank a failing business above "
+            "a surviving one. Both are needed — a model can pass either alone while "
+            "being useless."
+        ),
+    }
+
+
+# ---------------------------------------------------------------------------
 # credit risk + explainability
 # ---------------------------------------------------------------------------
 

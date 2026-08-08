@@ -21,7 +21,7 @@ cd backend
 python -m venv ../.venv                      # Python 3.12
 ../.venv/Scripts/python -m pip install -r requirements.txt
 
-# tests (92: statistical correctness + OCR integration)
+# tests (204: statistical correctness, ingestion, and API integration)
 ../.venv/Scripts/python -m pytest tests -q
 
 # API — interactive docs at http://127.0.0.1:8000/docs
@@ -89,15 +89,49 @@ backend/app/services/quant_core/       # Section A — the research core
   risk_scoring.py                      # A.4 logistic + GBM vs rules baseline
   anomaly_detection.py                 # A.5 robust z / Isolation Forest / DBSCAN
   unstructured.py                      # A.6 char n-gram TF-IDF + STL
+  bankruptcy_risk.py                   # A.7 ruin probability + hazard + Altman Z''
   optimization/                        # A.3 LP/MILP, knapsack DP, cross-check, SAA
-backend/app/services/ingestion/        # receipt OCR path
+backend/app/services/ingestion/        # two channels, one set of domain records
   ocr_service.py                       # engine-agnostic OCR + field extraction
   receipt_generator.py                 # synthetic receipts, 3 difficulty tiers
   normalizer.py                        # -> Outflow, then A.5 duplicate screen
   accuracy_report.py                   # per-tier scoring harness
+  statement_generator.py               # synthetic bank statements, 6 bank dialects
+  statement_parser.py                  # column inference by running-balance identity
+  bank_api_client.py                   # API channel: pagination, idempotency, rate cap
 backend/app/services/backtesting/      # Section C — replay, regret, calibration
 frontend/                              # Next.js dashboard, 5 pages, live data only
 ```
+
+## The two ingestion channels
+
+Documents come in through OCR; account data comes in through the statement
+path. Both converge on the same `Inflow` / `Outflow` records, and both refuse
+rather than emit a record they cannot stand behind.
+
+The statement path carries a check the OCR path cannot: a statement asserts its
+own running balance, `balance[i] == balance[i-1] + credit - debit`. That is used
+not merely to validate the parse but to **choose** it — the parser enumerates
+plausible column mappings and keeps the one the arithmetic accepts. Header names
+are only tie-breakers. The reason is that the two failures a name-based parser
+cannot see, swapped debit/credit columns and an inverted sign convention, are
+exactly the two the identity rejects on the first row, and both otherwise
+produce a perfectly well-formed ledger that is wrong throughout.
+
+Six bank dialects are generated from one ledger — separate debit/credit columns,
+a signed column, an amount column with a Dr/Cr flag, an Indian export with
+preamble and lakh grouping, a US export with parenthesised negatives and no
+balance column, and a date column whose days are all ≤ 12 so `dd/mm` and `mm/dd`
+both parse. A correct parser must return **identical records from all six**,
+which is what `test_all_dialects_recover_the_same_ledger` asserts.
+
+The API channel (`POST /ingestion/statements/sync`) is a real client — cursor
+pagination, request-derived idempotency keys, a rolling-window rate cap, and
+exponential backoff with full jitter honouring `Retry-After`, tested against a
+live local HTTP server over a real socket. What it is *not* is a bank
+integration: with no Decentro or Plaid credentials, it ships with an in-process
+reference provider that every response labels `local_reference`. Point
+`base_url` at a sandbox and the same code path speaks to it.
 
 ---
 
@@ -218,6 +252,24 @@ the HARD tier should route to human review rather than into the ledger.
   default rate, "never defaults" scores 85% while being useless.
 - **Chance constraint.** Achieved shortfall probability lands exactly on ε
   (0.200 / 0.100 / 0.050 / 0.010), with a monotone risk-penalty frontier.
+- **Ruin probability checked against a closed form.** The simulated
+  first-passage probability sits 2–3 points below the reflection-principle
+  formula — always in that direction, because daily-step paths cannot see an
+  excursion that dips and recovers inside one day. Applying the
+  Broadie–Glasserman–Kou discrete-barrier correction
+  (`beta*sigma*sqrt(dt)`, `beta ≈ 0.5826`) closes the gap to under 0.005 across
+  three configurations. The residual error is the one theory predicts, not error
+  of unknown origin.
+- **Ruin probabilities are calibrated, and the plug-in estimator was not.**
+  Against 800 firms whose futures are actually played out: Brier skill +0.4945,
+  ROC-AUC 0.954, expected calibration error 0.0156. Simulating from point
+  estimates instead — the ordinary plug-in approach — under-predicts ruin
+  (0.1077 against a realized 0.1200) and carries 63% more calibration error,
+  because it propagates process noise while discarding estimation noise. Both
+  runs are scored against the identical population.
+- **Statement parsing is exact across six bank dialects**, including a file
+  whose Debit and Credit headers are swapped — the running-balance identity
+  overrides the labels and recovers the correct ledger.
 
 ---
 
@@ -242,5 +294,11 @@ series never repaints the others. Every figure is JetBrains Mono with
 
 `/graph/*`, `/chat`, `/voice/*` return **HTTP 501** with a stated reason. They
 route, authenticate and validate correctly, but nothing behind them is faked —
-no canned text, no placeholder numbers. Decentro/Plaid ingestion, Postgres,
-Celery and Graph RAG are likewise absent rather than stubbed.
+no canned text, no placeholder numbers. Postgres, Celery and Graph RAG are
+likewise absent rather than stubbed.
+
+**Decentro/Plaid specifically.** There is a real, tested HTTP statement client
+(`HttpStatementProvider`) and it is the integration point, but no vendor-branded
+connector exists because no credentials do. `GET /ingestion/providers` lists
+those vendors as `available: false` rather than omitting them, so the gap is
+visible in the API rather than only in this file.

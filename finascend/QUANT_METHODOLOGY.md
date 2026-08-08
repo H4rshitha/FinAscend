@@ -667,7 +667,247 @@ says so rather than reporting an average that hides it.
 
 ---
 
-## 7. Honest limitations
+## 6c. Bank statement ingestion — the second channel
+
+The chain is `csv → header location → column-role inference → reconciliation →
+Inflow/Outflow`, converging on the same domain records as the OCR path.
+
+### The mapping is selected by the statement's own arithmetic
+
+The hard part of statement parsing is not reading numbers, it is deciding what
+the columns *mean*. There is no standard: `Withdrawal (Dr)`, `Debit`, `DR
+Amount` and a bare `Amount` beside a `Dr/Cr` flag all denote the same thing,
+and some exports label the balance column `Amount` too.
+
+Header names are therefore treated as weak evidence. The parser **enumerates
+the plausible mappings and selects the one satisfying the running-balance
+identity**
+
+    balance[i] == balance[i-1] + credit[i] - debit[i]
+
+on every row. This inverts the usual arrangement, in which the identity
+validates a mapping chosen by other means. The reason: the two failures a
+name-based parser cannot detect — debit and credit swapped, and an inverted
+sign convention — are precisely the two the identity rejects instantly, while
+both produce a completely well-formed ledger that is wrong in every row. It is
+the same redundancy trick as the receipt's `total = subtotal + tax` check in
+§6b, but stronger, because it holds per row rather than once per document, so a
+mis-parse is localizable rather than merely detectable.
+
+`test_swapped_debit_credit_headers_are_corrected_by_the_identity` swaps the two
+headers and asserts the ledger still comes back right. It does.
+
+### Why six dialects, and what they buy
+
+The generator emits the *same* ledger through six bank layouts — separate
+debit/credit columns; one signed column; an amount column with a Dr/Cr flag; an
+Indian export with account preamble and lakh grouping; a US export with
+parenthesised negatives and no balance column; and a date column whose days are
+all ≤ 12.
+
+That last is a deliberate trap: `dd/mm` and `mm/dd` both parse every cell, so
+no cell-level rule can settle it. The format is inferred from the whole column
+instead — the reading that parses every row *and* leaves the sequence
+chronological, since statements are in posting order. Where two readings
+survive both filters (a diagonal column: 01/01, 02/02, 03/03), the parser
+returns its preferred reading **with a warning naming the alternative** rather
+than choosing silently. Silent choice is how a statement reconciles perfectly
+with every date wrong.
+
+The payoff is `test_all_dialects_recover_the_same_ledger`: identical parsed
+records from all six layouts. A stronger correctness assertion than any golden
+file, and it needs no maintenance.
+
+One design note, recorded because it was a real bug: the generator originally
+drew dates and amounts from a single RNG stream, and the ambiguous dialect
+consumes a different number of date draws than the others. That desynchronized
+every subsequent amount, so "same seed, same ledger" quietly stopped holding.
+The cross-dialect test caught it. Dates and amounts now draw from separate
+streams.
+
+### Refusal, again
+
+A statement failing its own arithmetic is returned with `rejected = true`, a
+localized list of failing rows, and a diagnosis — the residual pattern
+distinguishes an inverted direction (every residual exactly twice its row's
+amount) from a single bad cell from a missing row (monotonically growing
+residuals). No records are built. A statement with no balance column reports
+`checkable = false`, **not** `passed = true`: an unchecked parse and a verified
+one are different claims.
+
+### The API channel
+
+`bank_api_client.py` pulls the same CSV over HTTP: cursor pagination,
+client-derived idempotency keys, a rolling-window rate cap, and exponential
+backoff with full jitter honouring `Retry-After`. Three choices worth naming:
+
+- **The idempotency key is derived from the request, not random.** A random key
+  makes every retry a new request — exactly the double-post the mechanism
+  exists to prevent.
+- **The window is rolling, not calendar-monthly.** A calendar reset permits a
+  full budget on the 31st and another on the 1st, twice the intended rate
+  through the moment that matters.
+- **Failed calls consume budget.** Counting only successes would let a caller
+  retry a broken endpoint without limit.
+
+Pages are assembled and parsed as **one** statement; parsing per page would
+break the reconciliation at every page boundary and discard the strongest
+validation the file carries.
+
+What is real here is the client. What is not is the counterparty: there are no
+Decentro or Plaid credentials for this project, so two providers ship — an
+in-process reference provider serving generated statements, labelled
+`local_reference` in every response, and a real HTTP provider tested against a
+live local server over a real socket. Neither is a bank integration, and the
+response says which one produced it.
+
+---
+
+## 7. Bankruptcy risk — P(the business itself fails)
+
+### Why RaR was not already this
+
+RaR reports a *quantile of the first-passage time*. That is a different object
+from a failure probability, and the difference is not presentational:
+
+- RaR is **censored at the horizon**. A business that never runs out inside 90
+  days contributes `days_to_zero = 90`, indistinguishable from one that hits
+  zero on day 90 exactly.
+- A quantile **cannot be scored against an outcome**. "95% RaR = 42 days" is
+  not a prediction any single business can falsify. "P(ruin within 90 days) =
+  0.18" is — which is the whole reason to compute it.
+
+This is also **not** A.4's credit model. That scores the probability a
+*counterparty* defaults on the business; this scores the probability the
+*business* fails. Separate modules, and the API response says so explicitly.
+
+### Ruin is absorbing
+
+Ruin is `P(min over [0,t] of balance ≤ 0)`, not `P(balance at t ≤ 0)`. A
+business rescued in week six by a receivable still missed the payroll it could
+not make in week three, and a terminal-value check would score it healthy.
+Implemented as `np.minimum.accumulate(balances, axis=1) <= 0`, which is True
+from the crossing onward by construction.
+
+The hazard rate is reported beside the cumulative curve, because a curve rising
+smoothly to 30% can be produced either by steady attrition or by a single cliff
+at a payroll date — the difference between "gradually weakening" and "fails on
+the 30th unless something changes". Only the hazard distinguishes them.
+
+### Validated against a closed form
+
+A driftful random walk's first-passage probability has an exact solution by the
+reflection principle:
+
+    P = Phi((-x0 - mu*T)/(sigma*sqrt(T)))
+        + exp(-2*mu*x0/sigma^2) * Phi((-x0 + mu*T)/(sigma*sqrt(T)))
+
+so the simulator can be graded against an answer derived independently of it.
+
+Measured across three configurations, the simulation sits **2–3 percentage
+points below** the continuous formula, always in that direction. That is not
+error to be absorbed by a wide tolerance — it is the Broadie–Glasserman–Kou
+discrete-barrier effect. Daily-step paths are observed only at day boundaries,
+so an excursion that dips and recovers inside one day is invisible, and this is
+equivalent to monitoring a barrier shifted by `beta*sigma*sqrt(dt)` with
+`beta = -zeta(1/2)/sqrt(2*pi) ≈ 0.5826`. Applying that shift:
+
+| configuration | simulated | raw formula | BGK-corrected |
+|---|---:|---:|---:|
+| x0=30k, mu=−200, sigma=2500, T=90 | 0.42387 | 0.45304 | 0.42391 |
+| x0=50k, mu=−100, sigma=3000, T=120 | 0.19667 | 0.21372 | 0.19599 |
+| x0=20k, mu=−300, sigma=1800, T=60 | 0.54383 | 0.57332 | 0.53917 |
+
+The residual is under half a percentage point. That is a far stronger claim
+than "within tolerance": it says the simulator is correct *and* that its
+remaining error is the one theory predicts, rather than error of unknown
+origin. Daily resolution is also the honest choice for the underlying claim — a
+business is not insolvent because its balance dipped for six hours between a
+debit and a credit that both cleared the same day.
+
+### Calibration — measured, not asserted
+
+A probability nobody scored against outcomes is an index with a percent sign.
+The experiment: draw firms with heterogeneous true drift and volatility; show
+the estimator only a 180-day history; predict `P(ruin within 90 days)` by Monte
+Carlo from the *estimates*; then play each future out **once** from the true
+parameters and record whether ruin actually happened. One realized path per
+firm, not an average — a business lives its future once, and averaging would
+measure something easier than the thing being claimed.
+
+Three metrics, because none substitutes for another. A model predicting the
+base rate for everyone has Brier skill 0 and AUC 0.5; a model with good skill
+and AUC 0.5 cannot tell a doomed business from a healthy one.
+
+| | plug-in estimates | predictive (parameter uncertainty propagated) |
+|---|---:|---:|
+| realized ruin rate | 0.1200 | 0.1200 |
+| mean predicted | 0.1077 | **0.1141** |
+| Brier score | 0.05430 | **0.05338** |
+| Brier skill score | +0.4858 | **+0.4945** |
+| ROC-AUC | 0.9502 | **0.9537** |
+| expected calibration error | 0.0254 | **0.0156** |
+
+*800 businesses, 3,000 iterations, seed 20260809.*
+
+**The plug-in estimator is measurably overconfident.** Simulating from point
+estimates as though they were the truth propagates process noise but discards
+estimation noise, so the predicted spread is too narrow and ruin is
+under-predicted — 0.1077 against a realized 0.1200. Drawing each iteration's
+parameters from their sampling distributions instead
+(`sigma^2 ~ sigma_hat^2 (n-1)/chi2_{n-1}`, `mu ~ N(mu_hat, sigma/sqrt(n))`)
+closes most of the gap and cuts calibration error by 39%. That is why the
+predictive construction is the default.
+
+Both runs are scored against the **same** firms and the same realized outcomes:
+the validator uses split RNG streams for the world and the predictor
+specifically so this comparison is controlled. An earlier version shared one
+stream, and because the two modes consume different numbers of draws they were
+scored against different populations with different base rates (0.090 vs
+0.113) — any difference between them would have confounded the estimator change
+with a change of dataset.
+
+### Altman Z'' — an external model, labelled as one
+
+The cash-flow view reads the payment path. A second, independent view reads the
+balance sheet: Altman's 1995 Z''-score for non-manufacturers,
+
+    Z'' = 6.56*X1 + 3.26*X2 + 6.72*X3 + 1.05*X4
+
+The original 1968 Z is simply not computable here — its X4 needs *market* value
+of equity, which a small business does not have. Substituting book equity and
+still calling it Z would be a misattribution rather than a simplification; the
+Z'' revision was built for exactly this case.
+
+Two honesty constraints:
+
+- **The coefficients are Altman's, not refitted.** There is no default-labelled
+  panel of small-business balance sheets here to refit them on, and refitting on
+  synthetic data would produce numbers that look like Altman's and mean
+  something else. So this is a published external model applied to supplied
+  inputs, reported as such and explicitly unvalidated by this project's
+  backtest.
+- **Every input carries its provenance** (`supplied_by_business`,
+  `derived_from_ledger`, `approximated`), and missing inputs are **refused**
+  rather than zero-filled. Zero retained earnings is a real and much stronger
+  claim than unknown retained earnings.
+
+### The two views are never averaged
+
+They are reported side by side with a stated verdict on whether they agree.
+Averaging a calibrated probability into an uncalibrated external score would
+produce a composite with no validity claim at all, and would hide which half
+moved it.
+
+The disagreement is the useful case. A strong balance sheet with failing cash
+flow is the **solvent-but-illiquid** signature: assets exceed liabilities, but
+not in a form that settles this month's payroll. Solvency is not liquidity, and
+it is the liquidity view that predicts the missed payment. A blended score
+would report a comfortable middle for exactly that business.
+
+---
+
+## 8. Honest limitations
 
 - **Synthetic data cannot validate real-world counterparty behaviour.** It
   validates that the estimators work against a known generating process, which
@@ -709,3 +949,35 @@ says so rather than reporting an average that hides it.
   full in `BACKTEST_REPORT.md`. Solving the wrong problem precisely (an exact LP
   against an optimistic cash forecast) proved worse than solving roughly the
   right problem approximately.
+- **The ruin calibration validates a Gaussian random walk, not the production
+  simulator.** §7's experiment estimates drift and volatility from a history and
+  propagates their uncertainty — that is a real test of the estimator-plus-
+  simulator under parameter uncertainty, and it is the reason the predictive
+  construction is the default. But the production path in A.2 adds fitted delay
+  marginals and a t-copula on top, and *those* components are validated
+  separately (parameter recovery, PIT, correlation recovery) rather than jointly
+  through a calibration curve. A joint calibration would require replaying many
+  independent synthetic worlds end to end, which is affordable but was not run.
+  Until it is, the honest claim is: the ruin machinery is calibrated where it
+  has been measured, and its inputs are validated individually.
+- **The Z''-score is unvalidated by this project.** Altman's coefficients were
+  fitted on his sample, not on small Indian businesses and not on this
+  generator. It is reported because a second, independent view is worth having
+  and because disagreement between the two views is informative — not because
+  its zone boundaries have been shown to mean anything here. It is never blended
+  into the calibrated number for that reason.
+- **The statement parser is validated against generated exports, not real bank
+  files.** Six dialects is a broader corpus than one, and the cross-dialect
+  equality test is strong, but real exports carry things this generator does not
+  produce: merged cells, multi-line narratives, mid-file subtotal rows, currency
+  changes, and encodings that are not UTF-8. The reconciliation check is the
+  reason to expect graceful behaviour there — it refuses rather than guesses —
+  but "refuses correctly on files I have not seen" is an expectation, not a
+  measurement.
+- **Rate cap and idempotency are per-process.** Both live in memory, so they
+  hold within one worker's lifetime and not across a restart or a second
+  worker. Enforcing either across workers needs shared state — the same
+  Postgres/Redis dependency this project has deliberately not taken on. The
+  deterministic record ids are the second line of defence and do survive a
+  restart, which is what makes a duplicate post detectable downstream even when
+  the cache is gone.

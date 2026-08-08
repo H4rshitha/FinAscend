@@ -23,15 +23,22 @@ Stated plainly, because a document whose whole premise is not overstating rigour
 | Python runtime | **Installed and working** — Python 3.12.10 with a pinned `.venv` at `finascend/.venv`. |
 | `finascend/` source tree | **Built.** Sections A, B and C are implemented; see the tier table below. |
 | Section 2 Pydantic schemas | **Implemented and exercised** (`backend/app/schemas/`), with the §2.1 amendments applied. |
-| Test suite | **67 tests, all passing** (`backend/tests/unit/quant_core/`). |
+| Test suite | **204 tests, all passing** (`backend/tests/`). |
 
 | Build tier | Status |
 |---|---|
-| 1 — Quant Core (Section A) | **Complete.** A.0–A.6 implemented with real fitted logic, validated by the test suite. |
-| 2 — Deterministic backbone (Section B) | **Complete for the decision path** — rules baseline, credit scorer, solver callers, hash-chain audit. Ingestion/OCR/Decentro connectors remain unbuilt (no live credentials). |
+| 1 — Quant Core (Section A) | **Complete.** A.0–A.6 implemented with real fitted logic, plus **A.7 bankruptcy risk** (first-passage ruin probability validated against a closed form, hazard curve, Altman Z''), validated by the test suite. |
+| 2 — Deterministic backbone (Section B) | **Complete for the decision path** — rules baseline, credit scorer, solver callers, hash-chain audit. **Both ingestion channels now built:** receipt OCR, and bank-statement parsing over upload *and* a real HTTP API client. Vendor-branded Decentro/Plaid connectors remain unbuilt (no live credentials); `HttpStatementProvider` is the integration point. |
 | 3 — Backtesting harness (Section C) | **Complete.** Generates `BACKTEST_REPORT.md` from a real run. |
-| 4 — API / RBAC / audit | **Complete at working-endpoint level.** FastAPI with JWT + RBAC; no Next.js frontend, no Postgres/Celery (in-memory). |
+| 4 — API / RBAC / audit | **Complete at working-endpoint level.** FastAPI with JWT + RBAC; no Postgres/Celery (in-memory). Next.js frontend exists for the five quant pages; the statement and bankruptcy endpoints are API-only so far. |
 | 5 — Graph RAG / voice / multilingual | **Honest 501 stubs**, exactly as specified. |
+
+**A.7 was not in the original plan** and is recorded here as an addition rather
+than back-dated into the traceability table: `RunwayAtRisk` answers "how long
+until the cash runs out", which is a censored quantile and cannot be scored
+against any single outcome. "P(the business fails within 90 days)" can be, and
+is — Brier skill +0.49, ROC-AUC 0.954 against realized ruin. See
+`QUANT_METHODOLOGY.md` §7.
 
 Deliverables on disk: `QUANT_METHODOLOGY.md`, `FORECASTING_METHODOLOGY.md`,
 `BACKTEST_REPORT.md`, `README.md`, and three executed notebooks in
