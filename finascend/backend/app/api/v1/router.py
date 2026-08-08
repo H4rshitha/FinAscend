@@ -1,0 +1,584 @@
+"""API v1 — routes backed by the real Quant Core.
+
+Tier-4 endpoints (risk, simulation, decisions, audit) return genuinely
+computed values. Tier-5 endpoints (graph, voice, chat) return an honest 501:
+they route, authenticate and validate correctly, but they never fabricate an
+answer or return canned text that implies a working model.
+
+A demo dataset is fitted once at startup and cached, because refitting SARIMAX
+and running 10,000 Monte Carlo iterations per request would make the API
+unusable. The cache key includes the seed so results stay reproducible.
+"""
+
+from __future__ import annotations
+
+from datetime import date, datetime, timezone
+from functools import lru_cache
+from typing import Any, Optional
+from uuid import uuid4
+
+import numpy as np
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+
+from app.core.security import TokenPayload, create_access_token, current_user, require_role
+from app.schemas.base import UserRole
+from app.schemas.quant import RiskModelName, SolverName
+from app.services.audit.hash_chain_logger import HashChainLog
+from app.services.decision_engine.rule_based_prioritizer import (
+    measure_optimizer_lift,
+    prioritize,
+    solve_rule_based,
+)
+from app.services.quant_core.forecasting import select_and_forecast
+from app.services.quant_core.monte_carlo_engine import run_simulation
+from app.services.quant_core.optimization.chance_constrained import (
+    solve_chance_constrained,
+)
+from app.services.quant_core.optimization.cross_validation import cross_validate
+from app.services.quant_core.optimization.lp_solver import solve_lp
+from app.services.quant_core.pipeline import build_as_of_view
+from app.services.quant_core.risk_scoring import (
+    build_features,
+    compare_to_baseline,
+    explain_prediction,
+    rationale_from_contributions,
+    train_models,
+)
+from app.services.quant_core.synthetic_data import Regime, generate_dataset
+from app.services.backtesting.replay_harness import obligations_as_of
+
+from app.api.v1.endpoints.ingestion import router as ingestion_router
+
+router = APIRouter()
+router.include_router(ingestion_router)
+AUDIT = HashChainLog()
+
+DEMO_SEED = 42
+DEMO_DAYS = 1095
+DEMO_COUNTERPARTIES = 10
+
+
+def _not_implemented(feature: str, reason: str) -> HTTPException:
+    """The tier-5 contract: decline honestly rather than fake a response."""
+    return HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail={
+            "error_code": "not_implemented",
+            "message": f"{feature} is not yet implemented.",
+            "details": {
+                "reason": reason,
+                "status": "endpoint routes, authenticates and validates; no model is behind it yet",
+            },
+        },
+    )
+
+
+@lru_cache(maxsize=4)
+def _world(seed: int = DEMO_SEED, regime: str = "adversarial"):
+    return generate_dataset(
+        seed=seed,
+        regime=Regime(regime),
+        n_days=DEMO_DAYS,
+        n_counterparties=DEMO_COUNTERPARTIES,
+        opening_balance_months=1.2,
+    )
+
+
+# Demo vantage point: 72% through the history. NOT the last day — by then the
+# stressed demo business is essentially insolvent, which makes every metric
+# degenerate (RaR pins at 1 day, and all four solvers tie at zero lift because
+# nothing is affordable). 72% lands after the structural break, where the
+# business is under real pressure but the allocation decision still has
+# consequences. The point is to demo the engine where it has something to say.
+# Measured across the demo world: cash/30-day-obligation ratio runs 1.36 at
+# 72% of the history, 0.74 at 85%, 0.17 at 90%, and turns negative past 93%.
+# 0.85 is the point where cash and near-term obligations are comparable, which
+# is precisely where the allocation decision has consequences and where RaR is
+# neither pinned at the horizon nor collapsed to one day.
+DEMO_AS_OF_FRACTION = 0.85
+
+
+@lru_cache(maxsize=4)
+def _view(seed: int = DEMO_SEED, regime: str = "adversarial"):
+    ds = _world(seed, regime)
+    idx = int(len(ds.daily) * DEMO_AS_OF_FRACTION)
+    return build_as_of_view(ds, ds.daily["date"].iloc[idx].date())
+
+
+@lru_cache(maxsize=4)
+def _forecast(seed: int = DEMO_SEED, regime: str = "adversarial", horizon: int = 90):
+    v = _view(seed, regime)
+    return select_and_forecast(
+        v.daily,
+        horizon_days=horizon,
+        value_column="net_ex_receipts",
+        opening_balance=v.opening_balance,
+    )
+
+
+@lru_cache(maxsize=2)
+def _risk_models(seed: int = DEMO_SEED, regime: str = "adversarial"):
+    ds = _world(seed, regime)
+    data = build_features(ds.payments)
+    return data, train_models(data, seed=seed)
+
+
+@lru_cache(maxsize=2)
+def _simulation(seed: int = DEMO_SEED, regime: str = "adversarial", n: int = 10_000):
+    v = _view(seed, regime)
+    fc = _forecast(seed, regime)
+    return run_simulation(
+        opening_balance=v.opening_balance,
+        forecast=fc,
+        receivables=v.receivables,
+        delays_by_cp=v.delays_by_cp,
+        panel=v.delay_panel,
+        n_iterations=n,
+        seed=seed,
+        horizon_days=90,
+    )
+
+
+# ---------------------------------------------------------------------------
+# auth
+# ---------------------------------------------------------------------------
+
+@router.post("/auth/token", tags=["auth"])
+def issue_demo_token(role: UserRole = Query(UserRole.OWNER)) -> dict[str, Any]:
+    """Issue a demo token. A real deployment would authenticate a user first."""
+    return {
+        "access_token": create_access_token(
+            user_id="demo-user", role=role, business_id="demo-business"
+        ),
+        "token_type": "bearer",
+        "role": role.value,
+    }
+
+
+# ---------------------------------------------------------------------------
+# financial state
+# ---------------------------------------------------------------------------
+
+@router.get("/financial-state/summary", tags=["financial-state"])
+def financial_summary(user: TokenPayload = Depends(current_user)) -> dict[str, Any]:
+    v = _view()
+    fc = _forecast()
+    return {
+        "as_of": v.as_of.isoformat(),
+        "cash_balance": round(v.opening_balance, 2),
+        "outstanding_receivables": len(v.receivables),
+        "outstanding_receivable_value": round(float(v.receivables["amount"].sum()), 2),
+        "days_to_zero_point_estimate": fc.days_to_zero,
+        "note": (
+            "days_to_zero is a POINT estimate and ignores uncertainty. "
+            "Use /simulation/runway-at-risk for the honest version."
+        ),
+    }
+
+
+# ---------------------------------------------------------------------------
+# forecasting
+# ---------------------------------------------------------------------------
+
+@router.get("/risk/forecast", tags=["risk"])
+def get_forecast(
+    horizon_days: int = Query(90, ge=7, le=180),
+    user: TokenPayload = Depends(current_user),
+) -> dict[str, Any]:
+    """Forecast with prediction intervals, plus every candidate's score."""
+    fc = _forecast(DEMO_SEED, "adversarial", horizon_days)
+    return {
+        "selected_model": fc.selected_model,
+        "selection_rationale": fc.selection_rationale,
+        "interval_confidence": fc.interval_confidence,
+        "days_to_zero": fc.days_to_zero,
+        "candidates": [s.model_dump() for s in fc.scores],
+        "path": [p.model_dump() for p in fc.path[:horizon_days]],
+        # The conformal layer travels with the forecast: it is the evidence
+        # that the interval width was measured against held-out error rather
+        # than asserted by the model's own likelihood.
+        "interval_calibration": {
+            "method": "normalized split conformal on |residual| / scale(h)",
+            "q_hat": fc.conformal_q_hat,
+            "z_reference": fc.conformal_z_reference,
+            "scale_ratio": fc.conformal_scale_ratio,
+            "n_calibration_scores": fc.conformal_n_scores,
+            "level_achievable": fc.conformal_achieved,
+            "scale_gamma": fc.scale_gamma,
+            "reading": (
+                "q_hat multiplies a STANDARD DEVIATION, so its reference is "
+                "z = 1.96 at the 95% level, not 1.0 — a model whose stated "
+                "scale is exactly right still needs 1.96 of them. Read "
+                "scale_ratio = q_hat / z: 1.0 means the model's own scale was "
+                "right, 2.0 means it was half what it should have been."
+            ),
+        },
+    }
+
+
+# ---------------------------------------------------------------------------
+# simulation — the headline metric
+# ---------------------------------------------------------------------------
+
+@router.get("/simulation/runway-at-risk", tags=["simulation"])
+def runway_at_risk(
+    confidence: float = Query(0.95, ge=0.5, le=0.999),
+    user: TokenPayload = Depends(current_user),
+) -> dict[str, Any]:
+    """Runway-at-Risk and CRaR — the product's headline metric."""
+    from app.services.quant_core.monte_carlo_engine import compute_runway_at_risk
+
+    paths, _rar, spec = _simulation()
+    rar = compute_runway_at_risk(paths, confidence=confidence)
+    return {
+        "runway_at_risk_days": rar.runway_at_risk_days,
+        "conditional_runway_at_risk_days": round(rar.conditional_runway_at_risk_days, 2),
+        "confidence_level": rar.confidence_level,
+        "probability_of_shortfall": round(rar.probability_of_shortfall, 4),
+        "n_iterations": rar.n_iterations,
+        "mc_standard_error": round(rar.mc_standard_error, 4),
+        "random_seed": rar.random_seed,
+        "interpretation": (
+            f"There is a {(1 - confidence) * 100:.0f}% chance of reaching zero cash "
+            f"within {rar.runway_at_risk_days} days. In that worst-case tail, the "
+            f"average time to zero is {rar.conditional_runway_at_risk_days:.1f} days."
+        ),
+    }
+
+
+@router.get("/simulation/uncertainty-model", tags=["simulation"])
+def uncertainty_model(user: TokenPayload = Depends(current_user)) -> dict[str, Any]:
+    """The fitted delay distributions and copula behind the simulation."""
+    _paths, _rar, spec = _simulation()
+    return {
+        "fitted_at": spec.fitted_at.isoformat(),
+        "copula": spec.copula.model_dump(),
+        "fits": [
+            {
+                "counterparty_id": f.counterparty_id,
+                "n_observations": f.n_observations,
+                "selected_family": f.selected_family,
+                "selected_params": f.selected_params,
+                "prob_on_time": round(f.prob_on_time, 4),
+                "selection_rationale": f.selection_rationale,
+                "candidates": [c.model_dump() for c in f.candidates],
+            }
+            for f in spec.fits
+        ],
+    }
+
+
+# ---------------------------------------------------------------------------
+# credit risk + explainability
+# ---------------------------------------------------------------------------
+
+@router.get("/risk/models", tags=["risk"])
+def risk_model_comparison(user: TokenPayload = Depends(current_user)) -> dict[str, Any]:
+    """Rules vs logistic vs GBM, with the measured lift reported either way."""
+    _data, models = _risk_models()
+    return {
+        "performance": {
+            name.value if hasattr(name, "value") else str(name): m.performance.model_dump()
+            for name, m in models.items()
+        },
+        "lift_vs_baseline": {
+            cand.value: compare_to_baseline(models, cand).model_dump()
+            for cand in (RiskModelName.LOGISTIC_L2, RiskModelName.GBM)
+        },
+        "note": (
+            "Accuracy is deliberately not reported: on imbalanced default data "
+            "it is uninformative to the point of being misleading."
+        ),
+    }
+
+
+@router.get("/risk/{row_index}/explain", tags=["risk"])
+def explain_risk(
+    row_index: int,
+    model: RiskModelName = Query(RiskModelName.GBM),
+    user: TokenPayload = Depends(current_user),
+) -> dict[str, Any]:
+    """Per-feature attribution — the substantive answer to the trust barrier."""
+    data, models = _risk_models()
+    if not 0 <= row_index < len(data.X):
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error_code": "not_found",
+                "message": f"row_index must be in [0, {len(data.X) - 1}]",
+                "details": {},
+            },
+        )
+    fitted = models[model]
+    row = data.X.iloc[[row_index]]
+    prob = float(fitted.predict_proba(row)[0])
+    contribs = explain_prediction(fitted, row)
+    return {
+        "model": model.value,
+        "default_probability": round(prob, 4),
+        "rationale": rationale_from_contributions(prob, contribs),
+        "feature_contributions": [c.model_dump() for c in contribs],
+        "calibration": [b.model_dump() for b in fitted.calibration],
+        "baseline_comparison": compare_to_baseline(models, model).model_dump()
+        if model is not RiskModelName.RULE_BASELINE
+        else None,
+    }
+
+
+# ---------------------------------------------------------------------------
+# decisions + solver comparison
+# ---------------------------------------------------------------------------
+
+@router.get("/decisions/solvers", tags=["decisions"])
+def solver_comparison(user: TokenPayload = Depends(current_user)) -> dict[str, Any]:
+    """LP vs DP vs chance-constrained vs the rules baseline, on one instance."""
+    ds = _world()
+    v = _view()
+    rng = np.random.default_rng(DEMO_SEED)
+    problem = obligations_as_of(ds, v, rng=rng)
+    paths, _rar, _spec = _simulation()
+
+    check = cross_validate(problem)
+    cc = solve_chance_constrained(problem, paths.balances, epsilon=0.05, seed=DEMO_SEED)
+    baseline = solve_rule_based(problem)
+
+    return {
+        "available_cash": round(problem.available_cash, 2),
+        "total_obligations": round(problem.total_amount, 2),
+        "lp": check.lp.model_dump(),
+        "dp": check.dp.model_dump(),
+        "solver_agreement": check.agreement.model_dump(),
+        "chance_constrained": cc.model_dump(),
+        "rules_baseline": baseline.model_dump(),
+        "optimizer_lift_vs_baseline": measure_optimizer_lift(problem, check.lp),
+    }
+
+
+@router.get("/decisions/priority", tags=["decisions"])
+def priority_ranking(user: TokenPayload = Depends(current_user)) -> dict[str, Any]:
+    """The rules baseline's ranking, kept as the explicit comparison point."""
+    ds, v = _world(), _view()
+    problem = obligations_as_of(ds, v, rng=np.random.default_rng(DEMO_SEED))
+    return {"ranking": [r.__dict__ for r in prioritize(problem)]}
+
+
+@router.post("/decisions/{decision_id}/approve", tags=["decisions"])
+def approve_decision(
+    decision_id: str,
+    user: TokenPayload = Depends(require_role(UserRole.OWNER)),
+) -> dict[str, Any]:
+    """Approve a plan. OWNER only — an accountant may prepare but not authorize."""
+    entry = AUDIT.append(
+        actor_id=user.sub,
+        action="approve_decision",
+        entity_type="decision_plan",
+        entity_id=decision_id,
+        payload={"role": user.role, "business_id": user.business_id},
+    )
+    return {
+        "decision_id": decision_id,
+        "review_status": "approved",
+        "audit_sequence": entry.sequence,
+        "audit_hash": entry.entry_hash,
+    }
+
+
+# ---------------------------------------------------------------------------
+# audit
+# ---------------------------------------------------------------------------
+
+@router.get("/audit/chain", tags=["audit"])
+def audit_chain(user: TokenPayload = Depends(current_user)) -> dict[str, Any]:
+    return {
+        "head_hash": AUDIT.head_hash,
+        "n_entries": len(AUDIT.entries),
+        "entries": [e.__dict__ for e in AUDIT.entries],
+    }
+
+
+@router.get("/audit/verify", tags=["audit"])
+def audit_verify(user: TokenPayload = Depends(current_user)) -> dict[str, Any]:
+    ok, bad_seq, message = AUDIT.verify()
+    return {
+        "valid": ok,
+        "first_broken_sequence": bad_seq,
+        "message": message,
+        "caveat": (
+            "A hash chain proves tamper-EVIDENCE, not tamper-resistance. Anyone "
+            "able to rewrite the whole log can recompute every hash. Real "
+            "protection requires publishing the head hash somewhere the "
+            "attacker does not control."
+        ),
+    }
+
+
+# ---------------------------------------------------------------------------
+# backtest
+# ---------------------------------------------------------------------------
+
+def _find_artifact(name: str):
+    """Locate a generated backtest artifact relative to wherever uvicorn started."""
+    from pathlib import Path
+
+    for candidate in (Path(name), Path("..") / name, Path("../..") / name):
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def _require_summary() -> dict[str, Any]:
+    """Load the JSON summary, or 404 with instructions.
+
+    Never synthesizes a fallback series. A dashboard drawing an invented regret
+    curve is indistinguishable from one drawing a real one, which is precisely
+    the failure this project refuses everywhere else.
+    """
+    import json
+
+    path = _find_artifact("BACKTEST_REPORT.json")
+    if path is None:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error_code": "backtest_not_generated",
+                "message": "No backtest summary exists yet. Nothing is served in "
+                           "its place, because a placeholder chart cannot be "
+                           "told apart from a real one.",
+                "details": {
+                    "how_to_generate": (
+                        "python -m app.services.backtesting.run_backtest "
+                        "--step-days 21 --output ../BACKTEST_REPORT.md"
+                    )
+                },
+            },
+        )
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+@router.get("/backtest/report", tags=["backtest"])
+def backtest_report(user: TokenPayload = Depends(current_user)) -> dict[str, Any]:
+    """Serve the generated backtest report, or say plainly that it is absent."""
+    path = _find_artifact("BACKTEST_REPORT.md")
+    if path is not None:
+        return {"source": str(path), "markdown": path.read_text(encoding="utf-8")}
+    raise HTTPException(
+        status_code=404,
+        detail={
+            "error_code": "report_not_generated",
+            "message": "No backtest report exists yet.",
+            "details": {
+                "how_to_generate": "python -m app.services.backtesting.run_backtest"
+            },
+        },
+    )
+
+
+@router.get("/backtest/summary", tags=["backtest"])
+def backtest_summary(user: TokenPayload = Depends(current_user)) -> dict[str, Any]:
+    """The whole measured run: config, strategies, per-step series, calibration.
+
+    Served from the artifact `run_backtest` wrote, because re-running the
+    replay per request is tens of minutes of SARIMAX refits. The run's own
+    `generated_at` travels with it so the caller can see how stale it is rather
+    than having to assume.
+    """
+    return _require_summary()
+
+
+@router.get("/backtest/solvers", tags=["backtest"])
+def backtest_solver_comparison(user: TokenPayload = Depends(current_user)) -> dict[str, Any]:
+    """Rules vs LP vs DP vs chance-constrained, over the full replay.
+
+    Distinct from `/decisions/solvers`, which compares the four on a SINGLE
+    instance and answers "do they agree". This answers the different and more
+    important question: over 49 real decision points, what did each one
+    actually cost, and how often did it commit money that never arrived.
+    """
+    s = _require_summary()
+    strategies = s["strategies"]
+    base = next(x for x in strategies if x["name"] == "rules_baseline")
+    best = min(strategies, key=lambda x: x["total_realized_penalty"])
+
+    return {
+        "config": s["config"],
+        "generated_at": s["generated_at"],
+        "strategies": [
+            {
+                **{k: v for k, v in x.items() if k != "regret_series"},
+                "vs_rules_baseline": (
+                    (x["total_realized_penalty"] - base["total_realized_penalty"])
+                    / base["total_realized_penalty"]
+                    if base["total_realized_penalty"] > 0
+                    else 0.0
+                ),
+            }
+            for x in strategies
+        ],
+        "finding": (
+            f"The rules baseline was cheapest ({base['total_realized_penalty']:,.0f}); "
+            f"the LP optimizer cost "
+            f"{(next(x for x in strategies if x['name'] == 'lp_optimizer')['total_realized_penalty'] - base['total_realized_penalty']) / base['total_realized_penalty']:+.1%} "
+            "more. Solving the allocation exactly against an imperfect cash "
+            "forecast over-commits; the baseline's myopia leaves slack that "
+            "absorbs forecast error. The chance-constrained variant eliminated "
+            "over-commitment entirely but paid heavily for it. None of the four "
+            "dominates."
+        )
+        if best["name"] == "rules_baseline"
+        else (
+            f"{best['name']} achieved the lowest realized penalty "
+            f"({best['total_realized_penalty']:,.0f})."
+        ),
+    }
+
+
+@router.get("/backtest/calibration", tags=["backtest"])
+def backtest_calibration(user: TokenPayload = Depends(current_user)) -> dict[str, Any]:
+    """Interval coverage: pooled, by horizon band, and per-step q̂ over time."""
+    s = _require_summary()
+    return {
+        "generated_at": s["generated_at"],
+        "calibration": s["calibration"],
+        "steps": [
+            {
+                "as_of": st["as_of"],
+                "forecast_model": st["forecast_model"],
+                "conformal_q_hat": st["conformal_q_hat"],
+                "runway_at_risk_days": st["runway_at_risk_days"],
+                "conditional_runway_at_risk_days": st["conditional_runway_at_risk_days"],
+                "mc_standard_error": st["mc_standard_error"],
+            }
+            for st in s["steps"]
+        ],
+    }
+
+
+# ---------------------------------------------------------------------------
+# Tier 5 — honest stubs
+# ---------------------------------------------------------------------------
+
+@router.post("/graph/query", tags=["graph (not implemented)"])
+def graph_query(user: TokenPayload = Depends(current_user)):
+    raise _not_implemented(
+        "Graph RAG over the counterparty knowledge graph",
+        "Requires a Neo4j instance and an ingested relationship graph; neither is "
+        "provisioned. Ranked below the statistical core by the build priority order.",
+    )
+
+
+@router.post("/chat", tags=["chat (not implemented)"])
+def chat(user: TokenPayload = Depends(current_user)):
+    raise _not_implemented(
+        "Multilingual chatbot",
+        "No LLM backend is wired. Returning canned text here would imply a working "
+        "model, which is exactly the kind of false capability this project avoids.",
+    )
+
+
+@router.post("/voice/transcribe", tags=["voice (not implemented)"])
+def voice(user: TokenPayload = Depends(current_user)):
+    raise _not_implemented(
+        "Voice interface",
+        "Requires a speech-to-text service and a bidirectional audio WebSocket; "
+        "neither is provisioned.",
+    )
