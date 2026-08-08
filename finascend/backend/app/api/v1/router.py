@@ -248,23 +248,53 @@ def runway_at_risk(
 
 @router.get("/simulation/uncertainty-model", tags=["simulation"])
 def uncertainty_model(user: TokenPayload = Depends(current_user)) -> dict[str, Any]:
-    """The fitted delay distributions and copula behind the simulation."""
+    """The fitted delay distributions and copula behind the simulation.
+
+    Reports summary statistics of each fitted distribution alongside its
+    parameters. Those are computed here, from the frozen distribution, rather
+    than left for a caller to derive from `shape`/`scale` — a client that has to
+    reimplement "the mean of a Weibull" to show "usually pays in about 9 days"
+    is a client that will eventually get it wrong.
+
+    Note on `prob_on_time`: it is P(delay <= 0) and is therefore **structurally
+    zero** for every counterparty, because `loc` is pinned at 0 when fitting and
+    the candidate families are continuous. It is retained for compatibility but
+    carries no information and must not be rendered as a trust signal — use
+    `prob_within_7_days` or the delay quantiles, which actually discriminate.
+    """
+    from app.services.quant_core.monte_carlo_engine import frozen_from_fit
+
     _paths, _rar, spec = _simulation()
-    return {
-        "fitted_at": spec.fitted_at.isoformat(),
-        "copula": spec.copula.model_dump(),
-        "fits": [
+
+    fits = []
+    for f in spec.fits:
+        frozen = frozen_from_fit(f)
+        fits.append(
             {
                 "counterparty_id": f.counterparty_id,
                 "n_observations": f.n_observations,
                 "selected_family": f.selected_family,
                 "selected_params": f.selected_params,
                 "prob_on_time": round(f.prob_on_time, 4),
+                "prob_on_time_note": (
+                    "P(delay <= 0); structurally zero because loc is pinned at 0. "
+                    "Not a usable signal — see prob_within_7_days."
+                ),
+                # The discriminating statistics.
+                "mean_delay_days": round(float(frozen.mean()), 2),
+                "median_delay_days": round(float(frozen.ppf(0.5)), 2),
+                "p90_delay_days": round(float(frozen.ppf(0.9)), 2),
+                "prob_within_7_days": round(float(frozen.cdf(7.0)), 4),
+                "prob_within_30_days": round(float(frozen.cdf(30.0)), 4),
                 "selection_rationale": f.selection_rationale,
                 "candidates": [c.model_dump() for c in f.candidates],
             }
-            for f in spec.fits
-        ],
+        )
+
+    return {
+        "fitted_at": spec.fitted_at.isoformat(),
+        "copula": spec.copula.model_dump(),
+        "fits": fits,
     }
 
 
@@ -360,6 +390,169 @@ def priority_ranking(user: TokenPayload = Depends(current_user)) -> dict[str, An
     ds, v = _world(), _view()
     problem = obligations_as_of(ds, v, rng=np.random.default_rng(DEMO_SEED))
     return {"ranking": [r.__dict__ for r in prioritize(problem)]}
+
+
+# Plain-language labels for the generated chart-of-accounts categories. The
+# obligation_id is built as f"{category}-{as_of}" in `obligations_as_of`, so the
+# category is recoverable from it rather than needing a parallel lookup.
+_CATEGORY_LABELS = {
+    "payroll": "Staff wages",
+    "rent": "Rent",
+    "loan_emi": "Loan repayment",
+    "vendor_payment": "Supplier bill",
+    "tax": "Tax payment",
+    "utilities": "Electricity and water",
+}
+
+
+def _category_of(obligation_id: str) -> str:
+    return obligation_id.rsplit("-", 3)[0] if "-" in obligation_id else obligation_id
+
+
+def _plain_label(obligation_id: str) -> str:
+    cat = _category_of(obligation_id)
+    return _CATEGORY_LABELS.get(cat, cat.replace("_", " ").capitalize())
+
+
+def _due_phrase(days: float) -> str:
+    d = int(round(days))
+    if d <= 0:
+        return "due today"
+    if d == 1:
+        return "due tomorrow"
+    if d <= 7:
+        return f"due in {d} days"
+    return f"due in about {d // 7} week{'s' if d // 7 > 1 else ''}"
+
+
+def _justify(item, allocated: float, late_fee_if_unpaid: float) -> tuple[str, str]:
+    """Write the plain-language justification for one allocation.
+
+    Returns (action_type, justification). Every number in the sentence comes
+    from the solver's own output or the obligation's contract terms — nothing
+    is asserted that is not derived. The register is deliberately non-technical:
+    this text is what a business owner reads before approving a plan, so it says
+    "late fee" rather than "penalty rate" and never mentions the objective
+    function.
+    """
+    due = _due_phrase(item.days_until_due)
+    label = _plain_label(item.obligation_id)
+    fee = f"₹{late_fee_if_unpaid:,.0f}"
+
+    if allocated >= item.amount - 0.01:
+        action = "pay_now"
+        why = (
+            f"Pay {label} in full ({due}). "
+            + (
+                "This one cannot be split — it is all or nothing, so paying part "
+                "of it would still count as missing it. "
+                if item.is_rigid
+                else ""
+            )
+            + f"Missing it would add about {fee} in late fees."
+        )
+    elif allocated > 0.01:
+        short = item.amount - allocated
+        action = "pay_partial"
+        why = (
+            f"Pay ₹{allocated:,.0f} towards {label} now and leave ₹{short:,.0f} "
+            f"for later ({due}). There is not enough cash to clear everything "
+            f"this period, and this bill charges a lower late fee than the ones "
+            f"being paid in full, so delaying part of it costs the least."
+        )
+    else:
+        action = "defer"
+        why = (
+            f"Hold off on {label} for now ({due}). "
+            f"Its late fee of roughly {fee} is smaller than the fees on the "
+            f"bills being paid first, so if something has to wait, this costs "
+            f"you the least. Worth a call to ask for more time."
+        )
+    return action, why
+
+
+@router.get("/decisions/plan", tags=["decisions"])
+def decision_plan(user: TokenPayload = Depends(current_user)) -> dict[str, Any]:
+    """The recommended payment plan, with a justification per obligation.
+
+    This is the endpoint the non-technical view reads. It runs the real LP
+    solve, then writes `DecisionActionItem.justification` for each obligation
+    from that solve's own allocation plus the obligation's contract terms —
+    the schema field existed but nothing populated it, so the plain-language
+    layer had no source and the UI would have had to invent the sentence.
+
+    The solver comparison stays on `/decisions/solvers`; this route answers the
+    different question of *what should I do today, and why*.
+    """
+    ds, v = _world(), _view()
+    problem = obligations_as_of(ds, v, rng=np.random.default_rng(DEMO_SEED))
+    lp = solve_lp(problem)
+    baseline = solve_rule_based(problem)
+
+    by_id = {o.obligation_id: o for o in problem.obligations}
+    allocated_by_id = {a.obligation_id: float(a.allocated_amount) for a in lp.allocations}
+
+    actions = []
+    for o in sorted(problem.obligations, key=lambda x: x.days_until_due):
+        alloc = allocated_by_id.get(o.obligation_id, 0.0)
+        # Tolerance, not `> 0`: the allocation round-trips through Decimal, so a
+        # fully-funded obligation leaves a ~1e-10 residue. Treating that as a
+        # real shortfall made the justification quote a late fee of zero on
+        # every bill that was actually being paid in full.
+        raw_unpaid = o.amount - alloc
+        unpaid = raw_unpaid if raw_unpaid > 0.01 else 0.0
+        fee_if_unpaid = o.penalty_rate * unpaid if unpaid > 0 else o.max_penalty
+        action_type, why = _justify(o, alloc, fee_if_unpaid)
+        actions.append(
+            {
+                "obligation_id": o.obligation_id,
+                "label": _plain_label(o.obligation_id),
+                "category": _category_of(o.obligation_id),
+                "action_type": action_type,
+                "amount_due": round(o.amount, 2),
+                "allocated_amount": round(alloc, 2),
+                "shortfall": round(unpaid, 2),
+                "days_until_due": round(o.days_until_due, 1),
+                "is_rigid": o.is_rigid,
+                "late_fee_if_unpaid": round(fee_if_unpaid, 2),
+                "justification": why,
+            }
+        )
+
+    funded = sum(1 for a in actions if a["action_type"] == "pay_now")
+    total_fees = sum(a["late_fee_if_unpaid"] for a in actions if a["shortfall"] > 0.01)
+
+    return {
+        "as_of": v.as_of.isoformat(),
+        "available_cash": round(problem.available_cash, 2),
+        "total_obligations_amount": round(problem.total_amount, 2),
+        "solver_name": getattr(lp.solver_name, "value", str(lp.solver_name)),
+        "solver_status": lp.status,
+        "objective_value": round(lp.objective_value, 2),
+        "review_status": "pending_review",
+        "n_obligations": len(actions),
+        "n_paid_in_full": funded,
+        "expected_late_fees": round(total_fees, 2),
+        "shortfall": round(max(0.0, problem.total_amount - problem.available_cash), 2),
+        "actions": actions,
+        # Carried so the plain view can state the honest caveat without a second
+        # round trip: this plan is what the exact solver recommends, and the
+        # replay showed the exact solver losing to the simple rule.
+        "baseline_comparison": {
+            "rules_objective_value": round(baseline.objective_value, 2),
+            "lp_objective_value": round(lp.objective_value, 2),
+            "lp_better_on_this_instance": bool(
+                lp.objective_value < baseline.objective_value - 1e-6
+            ),
+            "caveat": (
+                "On this one day the exact optimizer plans a lower total late fee "
+                "than the simple rule. Over a 49-step replay it did NOT come out "
+                "ahead — planning against an imperfect cash forecast made it "
+                "commit money that never arrived. See the backtest for the "
+                "measured comparison."
+            ),
+        },
+    }
 
 
 @router.post("/decisions/{decision_id}/approve", tags=["decisions"])

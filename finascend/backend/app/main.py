@@ -39,9 +39,20 @@ def create_app() -> FastAPI:
         docs_url="/docs",
     )
 
+    # Both spellings of the loopback host are allowed by default. To a browser
+    # `http://localhost:3000` and `http://127.0.0.1:3000` are DIFFERENT origins,
+    # so allowing only one produces a frontend that works or fails depending on
+    # which form you typed in the address bar — with the request blocked before
+    # it ever reaches FastAPI, so the server log shows nothing at all.
+    default_origins = ",".join(
+        [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+        ]
+    )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=os.environ.get("FINASCEND_CORS_ORIGINS", "http://localhost:3000").split(","),
+        allow_origins=os.environ.get("FINASCEND_CORS_ORIGINS", default_origins).split(","),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
