@@ -7,6 +7,10 @@
  * plausible-looking figures, because a dashboard that invents data is
  * indistinguishable from one that does not, which is exactly the failure the
  * rest of this project is built to avoid.
+ *
+ * Every type below mirrors a real FastAPI handler. If a field is optional here
+ * it is because the backend can genuinely omit it, not to paper over a shape
+ * mismatch.
  */
 
 export const API_BASE =
@@ -14,12 +18,9 @@ export const API_BASE =
 
 let tokenPromise: Promise<string> | null = null;
 
-/** Fetch and cache a demo bearer token for the session. */
 async function getToken(): Promise<string> {
   if (!tokenPromise) {
-    tokenPromise = fetch(`${API_BASE}/auth/token?role=owner`, {
-      method: "POST",
-    })
+    tokenPromise = fetch(`${API_BASE}/auth/token?role=owner`, { method: "POST" })
       .then((r) => {
         if (!r.ok) throw new ApiError(`auth failed (HTTP ${r.status})`, r.status);
         return r.json();
@@ -44,6 +45,10 @@ export class ApiError extends Error {
     this.status = status;
     this.detail = detail;
   }
+  /** True when the backend could not be reached at all, vs. returned an error. */
+  get isOffline() {
+    return this.status === 0;
+  }
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -51,19 +56,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     token = await getToken();
   } catch {
-    throw new ApiError(
-      `Cannot reach the FinAscend API at ${API_BASE}.`,
-      0,
-      { hint: "start_backend" }
-    );
+    throw new ApiError(`Cannot reach the FinAscend API at ${API_BASE}.`, 0, {
+      hint: "start_backend",
+    });
   }
 
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...(init?.headers ?? {}),
-    },
+    headers: { Authorization: `Bearer ${token}`, ...(init?.headers ?? {}) },
   }).catch(() => {
     throw new ApiError(`Cannot reach the FinAscend API at ${API_BASE}.`, 0, {
       hint: "start_backend",
@@ -77,28 +77,51 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     } catch {
       /* body was not JSON; the status alone is the message */
     }
-    const d = detail as { message?: string; details?: Record<string, string> } | null;
-    throw new ApiError(
-      d?.message ?? `${path} failed (HTTP ${res.status})`,
-      res.status,
-      detail
-    );
+    const d = detail as { message?: string } | null;
+    throw new ApiError(d?.message ?? `${path} failed (HTTP ${res.status})`, res.status, detail);
   }
   return (await res.json()) as T;
 }
 
 export const api = {
-  get: <T>(path: string) => request<T>(path),
-  post: <T>(path: string, body?: FormData) =>
+  get: <T,>(path: string) => request<T>(path),
+  post: <T,>(path: string, body?: FormData) =>
     request<T>(path, { method: "POST", body }),
-  /** Absolute URL for an <img src>, which cannot carry an Authorization header. */
-  imageUrl: (path: string) => `${API_BASE}${path}`,
+  /**
+   * Fetch an authenticated image and hand back an object URL.
+   *
+   * An `<img src>` cannot carry an Authorization header, so pointing it
+   * straight at a protected endpoint just renders a broken image. Fetching the
+   * bytes with the token and wrapping them in a blob URL keeps the auth model
+   * intact. The caller MUST revoke the returned URL on unmount.
+   */
+  objectUrl: async (path: string): Promise<string> => {
+    const token = await getToken();
+    const res = await fetch(`${API_BASE}${path}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new ApiError(`image failed (HTTP ${res.status})`, res.status);
+    return URL.createObjectURL(await res.blob());
+  },
   token: getToken,
 };
 
-// ---------------------------------------------------------------------------
-// Response shapes — mirrored from the FastAPI handlers.
-// ---------------------------------------------------------------------------
+// ===========================================================================
+// financial state
+// ===========================================================================
+
+export interface FinancialSummary {
+  as_of: string;
+  cash_balance: number;
+  outstanding_receivables: number;
+  outstanding_receivable_value: number;
+  days_to_zero_point_estimate: number | null;
+  note: string;
+}
+
+// ===========================================================================
+// forecasting
+// ===========================================================================
 
 export interface ForecastPoint {
   as_of_date: string;
@@ -129,7 +152,6 @@ export interface ForecastResponse {
     /** Multiplies a sigma — compare against `z_reference`, never against 1.0. */
     q_hat: number | null;
     z_reference: number | null;
-    /** q_hat / z. 1.0 = the model's own scale was right. */
     scale_ratio: number | null;
     n_calibration_scores: number | null;
     level_achievable: boolean | null;
@@ -137,6 +159,10 @@ export interface ForecastResponse {
     reading: string;
   };
 }
+
+// ===========================================================================
+// simulation
+// ===========================================================================
 
 export interface RarResponse {
   runway_at_risk_days: number;
@@ -149,14 +175,201 @@ export interface RarResponse {
   interpretation: string;
 }
 
-export interface FinancialSummary {
-  as_of: string;
-  cash_balance: number;
-  outstanding_receivables: number;
-  outstanding_receivable_value: number;
-  days_to_zero_point_estimate: number | null;
+export interface DistCandidate {
+  family: string;
+  params: Record<string, number>;
+  ks_statistic: number;
+  ks_pvalue: number;
+  log_likelihood: number;
+  aic: number;
+  /** The winner, per AIC. Read this rather than matching on family name. */
+  selected: boolean;
+}
+
+export interface UncertaintyModel {
+  fitted_at: string;
+  copula: {
+    family: string;
+    df?: number | null;
+    correlation_matrix: number[][];
+    counterparty_order: string[];
+    correlation_source?: string;
+  };
+  fits: {
+    counterparty_id: string;
+    n_observations: number;
+    selected_family: string;
+    selected_params: Record<string, number>;
+    /**
+     * P(delay <= 0) — structurally ZERO for every counterparty, because `loc`
+     * is pinned at 0 and the families are continuous. Do not render it as a
+     * trust signal; it carries no information. Use the delay statistics below.
+     */
+    prob_on_time: number;
+    prob_on_time_note?: string;
+    mean_delay_days: number;
+    median_delay_days: number;
+    p90_delay_days: number;
+    prob_within_7_days: number;
+    prob_within_30_days: number;
+    selection_rationale: string;
+    candidates: DistCandidate[];
+  }[];
+}
+
+// ===========================================================================
+// credit risk
+// ===========================================================================
+
+export interface ModelPerformance {
+  model_name: string;
+  roc_auc: number;
+  brier_score: number;
+  log_loss: number;
+  n_train: number;
+  n_test: number;
+}
+
+/** Shape returned by `compare_to_baseline` — used in two places, so named once. */
+export interface BaselineComparison {
+  baseline_model: string;
+  baseline_roc_auc: number;
+  model_roc_auc: number;
+  auc_lift: number;
+  verdict: string;
+}
+
+export interface RiskModels {
+  performance: Record<string, ModelPerformance>;
+  lift_vs_baseline: Record<string, BaselineComparison>;
   note: string;
 }
+
+export interface CalibrationBin {
+  bucket_lower: number;
+  bucket_upper: number;
+  mean_predicted: number;
+  observed_rate: number;
+  n: number;
+}
+
+export interface FeatureContribution {
+  feature: string;
+  value: number;
+  contribution: number;
+  direction?: string;
+  ci_lower?: number | null;
+  ci_upper?: number | null;
+}
+
+export interface RiskExplain {
+  model: string;
+  default_probability: number;
+  rationale: string;
+  feature_contributions: FeatureContribution[];
+  calibration: CalibrationBin[];
+  baseline_comparison: BaselineComparison | null;
+}
+
+// ===========================================================================
+// decisions
+// ===========================================================================
+
+export interface PlanAction {
+  obligation_id: string;
+  label: string;
+  category: string;
+  action_type: "pay_now" | "pay_partial" | "defer";
+  amount_due: number;
+  allocated_amount: number;
+  shortfall: number;
+  days_until_due: number;
+  is_rigid: boolean;
+  late_fee_if_unpaid: number;
+  /** Written by the backend for non-technical review. Never composed here. */
+  justification: string;
+}
+
+export interface DecisionPlan {
+  as_of: string;
+  available_cash: number;
+  total_obligations_amount: number;
+  solver_name: string;
+  solver_status: string;
+  objective_value: number;
+  review_status: string;
+  n_obligations: number;
+  n_paid_in_full: number;
+  expected_late_fees: number;
+  shortfall: number;
+  actions: PlanAction[];
+  baseline_comparison: {
+    rules_objective_value: number;
+    lp_objective_value: number;
+    lp_better_on_this_instance: boolean;
+    caveat: string;
+  };
+}
+
+export interface AllocationItem {
+  obligation_id: string;
+  allocated_amount: number;
+  fully_funded: boolean;
+}
+
+export interface SolverSolution {
+  solver_name: string;
+  status: string;
+  objective_value: number;
+  allocations: AllocationItem[];
+  solve_seconds: number;
+}
+
+export interface SolverInstanceComparison {
+  available_cash: number;
+  total_obligations: number;
+  lp: SolverSolution;
+  dp: SolverSolution;
+  solver_agreement: {
+    lp_objective_value: number;
+    dp_objective_value: number;
+    absolute_delta: number;
+    tolerance: number;
+    agree: boolean;
+    explanation: string;
+  };
+  /**
+   * Note the nesting: the chance-constrained result wraps a normal
+   * `SolverSolution` under `solution`, alongside the risk parameters. Its
+   * `status` carries a full infeasibility explanation when even zero spend
+   * breaches epsilon — which is a real outcome on a stressed book, not an
+   * error, and the UI must say so rather than render a spend limit.
+   */
+  chance_constrained: {
+    epsilon: number;
+    saa_num_scenarios: number;
+    achieved_shortfall_probability: number;
+    solution: SolverSolution;
+    stability_across_resamples: number;
+  };
+  rules_baseline: SolverSolution;
+  optimizer_lift_vs_baseline: Record<string, number | string>;
+}
+
+export interface PriorityRanking {
+  ranking: { obligation_id: string; rank: number; score: number; reason: string }[];
+}
+
+export interface ApproveResponse {
+  decision_id: string;
+  review_status: string;
+  audit_sequence: number;
+  audit_hash: string;
+}
+
+// ===========================================================================
+// backtest
+// ===========================================================================
 
 export interface StrategyRow {
   name: string;
@@ -198,10 +411,8 @@ export interface BacktestSummary {
     mean_interval_width: number;
     verdict: string;
     previous_build: {
-      /** Directly comparable to `empirical` — same replay configuration. */
       pooled: number;
       pooled_config: string;
-      /** From a denser 14-day diagnostic replay; NOT this configuration. */
       diagnostic_before_pooled: number;
       diagnostic_after_pooled: number;
       sarimax_branch: number;
@@ -231,49 +442,55 @@ export interface BacktestSummary {
   }[];
 }
 
-export interface ModelPerformance {
-  roc_auc: number;
-  brier_score: number;
-  n_train: number;
-  n_test: number;
-  positive_rate: number;
-  [k: string]: number | string;
+export interface BacktestCalibration {
+  nominal: number;
+  empirical: number;
+  n_observations: number;
+  verdict: string;
+  by_horizon: {
+    label: string;
+    from: number;
+    to: number;
+    n: number;
+    coverage: number;
+    mean_width: number;
+  }[];
+  q_hat_by_step: { as_of: string; model: string; q_hat: number }[];
+  [k: string]: unknown;
 }
 
-export interface RiskModels {
-  performance: Record<string, ModelPerformance>;
-  lift_vs_baseline: Record<
-    string,
-    { candidate_auc: number; baseline_auc: number; auc_lift: number; verdict: string;
-      [k: string]: number | string }
-  >;
-  note: string;
+// ===========================================================================
+// audit
+// ===========================================================================
+
+export interface AuditEntry {
+  sequence: number;
+  timestamp: string;
+  actor_id: string;
+  action: string;
+  entity_type: string;
+  entity_id: string;
+  payload: Record<string, unknown>;
+  previous_hash: string;
+  entry_hash: string;
 }
 
-export interface CalibrationBin {
-  bin_lower: number;
-  bin_upper: number;
-  mean_predicted: number;
-  observed_rate: number;
-  n: number;
+export interface AuditChain {
+  head_hash: string | null;
+  n_entries: number;
+  entries: AuditEntry[];
 }
 
-export interface FeatureContribution {
-  feature: string;
-  value: number;
-  contribution: number;
-  ci_lower?: number | null;
-  ci_upper?: number | null;
+export interface AuditVerify {
+  valid: boolean;
+  first_broken_sequence: number | null;
+  message: string;
+  caveat: string;
 }
 
-export interface RiskExplain {
-  model: string;
-  default_probability: number;
-  rationale: string;
-  feature_contributions: FeatureContribution[];
-  calibration: CalibrationBin[];
-  baseline_comparison: { auc_lift: number; verdict: string } | null;
-}
+// ===========================================================================
+// ingestion / OCR
+// ===========================================================================
 
 export interface ReceiptSample {
   id: string;
