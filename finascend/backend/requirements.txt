@@ -1,0 +1,38 @@
+# FinAscend backend — pinned for Python 3.12
+# Quant Core (Section A) dependencies are the non-negotiable ones; the API layer
+# sits on top of them.
+
+# --- numerics / stats ---
+numpy==1.26.4
+pandas==2.2.3
+scipy==1.14.1
+statsmodels==0.14.4
+scikit-learn==1.5.2
+
+# --- optimization ---
+PuLP==2.9.0
+
+# --- explainability (A.4) ---
+shap==0.46.0
+
+# --- notebooks / plots ---
+# NOTE: the `jupyter` metapackage is deliberately NOT pinned here. It pulls
+# JupyterLab, whose bundled labextension assets exceed the Windows MAX_PATH
+# limit when the repo lives under OneDrive, and pip rolls back the entire
+# transaction when that happens. nbformat/nbclient/ipykernel are sufficient to
+# author AND execute notebooks programmatically, and VS Code renders .ipynb
+# natively. Install `jupyterlab` separately if you want the browser UI.
+matplotlib==3.9.2
+nbformat==5.10.4
+nbclient==0.10.2
+ipykernel==6.29.5
+
+# --- API layer ---
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+python-jose[cryptography]==3.3.0
+python-multipart==0.0.20
+
+# --- tests ---
+pytest==8.3.4

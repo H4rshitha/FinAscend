@@ -1,0 +1,46 @@
+# --- Python ---
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# --- Node / Next.js ---
+node_modules/
+.next/
+out/
+.vercel/
+*.tsbuildinfo
+npm-debug.log*
+yarn-error.log*
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- OCR / ML model weights (downloaded on first use, not source) ---
+*.pth
+*.onnx
+.EasyOCR/
+
+# --- Environment / secrets ---
+.env
+.env.local
+.env*.local
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
