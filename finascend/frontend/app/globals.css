@@ -1,0 +1,683 @@
+/* ============================================================================
+   FinAscend design system — "quant terminal"
+   ============================================================================
+
+   COMMITTED TO DARK. Not a dark variant of a light theme: the palette was
+   stepped for a dark surface and validated against it. A liquidity dashboard
+   is read for long stretches at a glance, and a dark ground lets the few
+   colored marks carry meaning instead of competing with a white field.
+
+   COLOR — every categorical hue below was machine-validated against the
+   #11151a chart surface (OKLab, all-pairs, protan/deutan/tritan), not chosen
+   by eye:
+
+     lightness band    all 4 inside L 0.48-0.67          PASS
+     chroma floor      all 4 >= 0.1                       PASS
+     CVD separation    worst all-pairs dE 8.8 (deutan)    PASS  (>= 8)
+     normal vision     worst all-pairs dE 16.1            PASS  (>= 15)
+     contrast          all 4 >= 3:1 vs surface            PASS
+
+   Deliberately NOT default framework blue/gray. The series hues are amber,
+   teal, violet and rose; the greys are cool-neutral slate rather than the
+   pure-black-to-white ramp, so the surface reads as a panel rather than a
+   void.
+
+   Series colors are bound to a STRATEGY, never to a rank. `rules_baseline` is
+   amber in every chart on every page, so a reader who learns the mapping once
+   keeps it — and a filter that drops a strategy never repaints the survivors.
+
+   TYPE — two families, one scale.
+
+     Display / prose : "Inter", system-ui        — labels, headings, body
+     Numeric         : "JetBrains Mono", ui-monospace, with tabular figures
+
+   Every figure in the product is monospace with `font-variant-numeric:
+   tabular-nums`, so digits occupy identical width and a column of rupee
+   amounts aligns on its decimal without manual padding. Proportional digits
+   in a table make magnitudes hard to compare at a glance, which is most of
+   what this interface is for.
+
+   Scale is a 1.25 minor third off a 13px base, rounded to whole pixels:
+     11 / 13 / 14 / 16 / 20 / 25 / 32 / 40
+   Small by web-app standards on purpose — density is the point of a terminal.
+   ========================================================================= */
+
+:root {
+  color-scheme: dark;
+
+  /* --- surfaces: cool slate, three depths --- */
+  --surface-0: #0a0d11; /* page ground */
+  --surface-1: #11151a; /* card / chart surface — the validated surface */
+  --surface-2: #171d24; /* raised: table header, hovered row */
+  --surface-3: #1f272f; /* input, well */
+
+  /* --- ink --- */
+  --text-primary: #e6ecf2;
+  --text-secondary: #9aa7b4;
+  --text-muted: #66737f;
+  --text-inverse: #0a0d11;
+
+  /* --- structure --- */
+  --border: #222b34;
+  --border-strong: #2f3a45;
+  --grid: #1a2129; /* chart gridlines: recessive, never competing */
+
+  /* --- categorical series (validated set; fixed order, never cycled) --- */
+  --series-1: #bf8524; /* amber  — rules_baseline */
+  --series-2: #0d9aa8; /* teal   — lp_optimizer */
+  --series-3: #8272dd; /* violet — dp_knapsack */
+  --series-4: #dd5c79; /* rose   — chance_constrained */
+
+  /* --- status: reserved, never reused as a series hue --- */
+  --status-good: #2f9e5f;
+  --status-warn: #b8891f;
+  --status-critical: #d64545;
+
+  /* --- sequential (single hue, light -> dark), for magnitude only --- */
+  --seq-1: #0d3d44;
+  --seq-2: #10606c;
+  --seq-3: #0d9aa8;
+  --seq-4: #4ec3ce;
+
+  /* --- accent for interactive affordances --- */
+  --accent: #0d9aa8;
+  --accent-quiet: rgba(13, 154, 168, 0.14);
+
+  /* --- type --- */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Mono",
+    Menlo, Consolas, monospace;
+
+  --fs-2xs: 11px;
+  --fs-xs: 13px;
+  --fs-sm: 14px;
+  --fs-md: 16px;
+  --fs-lg: 20px;
+  --fs-xl: 25px;
+  --fs-2xl: 32px;
+  --fs-3xl: 40px;
+
+  --lh-tight: 1.15;
+  --lh-normal: 1.5;
+  --lh-loose: 1.65;
+
+  /* --- spacing: 4px base --- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+
+  --radius: 6px;
+  --radius-sm: 4px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Every number in the product wears this. */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "zero" 1;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  letter-spacing: -0.01em;
+}
+h1 {
+  font-size: var(--fs-xl);
+}
+h2 {
+  font-size: var(--fs-md);
+}
+h3 {
+  font-size: var(--fs-sm);
+}
+p {
+  margin: 0;
+}
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* ---------------------------------------------------------------- layout */
+
+.shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 216px;
+  flex: 0 0 216px;
+  border-right: 1px solid var(--border);
+  background: var(--surface-1);
+  padding: var(--sp-5) 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.brand {
+  padding: 0 var(--sp-5) var(--sp-5);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--sp-4);
+}
+.brand-name {
+  font-size: var(--fs-md);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.brand-sub {
+  font-size: var(--fs-2xs);
+  color: var(--text-muted);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.nav-item {
+  display: block;
+  padding: var(--sp-2) var(--sp-5);
+  color: var(--text-secondary);
+  font-size: var(--fs-xs);
+  border-left: 2px solid transparent;
+}
+.nav-item:hover {
+  background: var(--surface-2);
+  color: var(--text-primary);
+  text-decoration: none;
+}
+.nav-item[data-active="true"] {
+  color: var(--text-primary);
+  border-left-color: var(--accent);
+  background: var(--accent-quiet);
+}
+.nav-index {
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  margin-right: var(--sp-2);
+  font-size: var(--fs-2xs);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: var(--sp-6) var(--sp-6) var(--sp-7);
+  max-width: 1280px;
+}
+
+.page-head {
+  margin-bottom: var(--sp-5);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--border);
+}
+.page-sub {
+  color: var(--text-secondary);
+  font-size: var(--fs-xs);
+  margin-top: var(--sp-2);
+  max-width: 74ch;
+  line-height: var(--lh-loose);
+}
+
+/* ---------------------------------------------------------------- cards */
+
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--sp-5);
+  margin-bottom: var(--sp-4);
+}
+.card-head {
+  margin-bottom: var(--sp-4);
+}
+.card-title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+.card-note {
+  font-size: var(--fs-2xs);
+  color: var(--text-muted);
+  margin-top: var(--sp-1);
+  line-height: var(--lh-loose);
+  max-width: 78ch;
+}
+
+.grid {
+  display: grid;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-4);
+}
+.grid-2 {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+.grid-3 {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.grid-4 {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+/* ---------------------------------------------------------------- tiles */
+
+.tile {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+}
+.tile-label {
+  font-size: var(--fs-2xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.tile-value {
+  font-size: var(--fs-2xl);
+  margin-top: var(--sp-2);
+  line-height: 1;
+}
+.tile-unit {
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  margin-left: var(--sp-1);
+}
+.tile-sub {
+  font-size: var(--fs-2xs);
+  color: var(--text-secondary);
+  margin-top: var(--sp-2);
+  line-height: var(--lh-loose);
+}
+
+/* ---------------------------------------------------------------- tables */
+
+table.data {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-xs);
+}
+table.data th {
+  text-align: left;
+  font-weight: 500;
+  font-size: var(--fs-2xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--border-strong);
+  white-space: nowrap;
+}
+table.data td {
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+}
+table.data td.n,
+table.data th.n {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+table.data tbody tr:hover {
+  background: var(--surface-2);
+}
+table.data tbody tr:last-child td {
+  border-bottom: none;
+}
+.row-key {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  flex: 0 0 9px;
+}
+
+/* ---------------------------------------------------------------- chips */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: var(--fs-2xs);
+  font-family: var(--font-mono);
+  padding: 2px var(--sp-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.chip[data-tone="good"] {
+  color: var(--status-good);
+  border-color: color-mix(in srgb, var(--status-good) 45%, transparent);
+  background: color-mix(in srgb, var(--status-good) 12%, transparent);
+}
+.chip[data-tone="warn"] {
+  color: var(--status-warn);
+  border-color: color-mix(in srgb, var(--status-warn) 45%, transparent);
+  background: color-mix(in srgb, var(--status-warn) 12%, transparent);
+}
+.chip[data-tone="critical"] {
+  color: var(--status-critical);
+  border-color: color-mix(in srgb, var(--status-critical) 45%, transparent);
+  background: color-mix(in srgb, var(--status-critical) 12%, transparent);
+}
+
+/* ---------------------------------------------------------------- legend */
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-3);
+  font-size: var(--fs-2xs);
+  color: var(--text-secondary);
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* ---------------------------------------------------------------- states */
+
+.state {
+  padding: var(--sp-6);
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: var(--fs-xs);
+}
+.state-error {
+  border: 1px solid color-mix(in srgb, var(--status-critical) 40%, transparent);
+  background: color-mix(in srgb, var(--status-critical) 8%, transparent);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  text-align: left;
+  color: var(--text-primary);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-loose);
+}
+.state-error code {
+  font-family: var(--font-mono);
+  background: var(--surface-3);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: var(--fs-2xs);
+  display: inline-block;
+  margin-top: var(--sp-2);
+}
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 25%,
+    var(--surface-3) 50%,
+    var(--surface-2) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: var(--radius-sm);
+}
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ---------------------------------------------------------------- charts */
+
+.chart-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+svg.chart {
+  display: block;
+  overflow: visible;
+}
+svg.chart text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  fill: var(--text-muted);
+}
+svg.chart .axis-line {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+svg.chart .grid-line {
+  stroke: var(--grid);
+  stroke-width: 1;
+}
+svg.chart .series-line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.spark {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* ---------------------------------------------------------------- forms */
+
+button,
+select,
+.btn {
+  font-family: var(--font-sans);
+  font-size: var(--fs-xs);
+  background: var(--surface-3);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: var(--sp-2) var(--sp-3);
+  cursor: pointer;
+}
+button:hover:not(:disabled),
+.btn:hover {
+  border-color: var(--accent);
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+button[data-variant="primary"] {
+  background: var(--accent);
+  color: var(--text-inverse);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.sample-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: var(--sp-3);
+}
+.sample {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--sp-2);
+  cursor: pointer;
+  background: var(--surface-2);
+  text-align: left;
+}
+.sample[data-selected="true"] {
+  border-color: var(--accent);
+  background: var(--accent-quiet);
+}
+.sample img {
+  width: 100%;
+  display: block;
+  border-radius: 2px;
+  background: #fff;
+}
+.sample-cap {
+  font-size: var(--fs-2xs);
+  color: var(--text-secondary);
+  margin-top: var(--sp-1);
+  font-family: var(--font-mono);
+}
+
+pre.raw {
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--sp-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  line-height: 1.6;
+  color: var(--text-secondary);
+  overflow-x: auto;
+  max-height: 320px;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.stage {
+  border-left: 2px solid var(--border-strong);
+  padding-left: var(--sp-4);
+  margin-bottom: var(--sp-4);
+}
+.stage[data-ok="true"] {
+  border-left-color: var(--status-good);
+}
+.stage[data-ok="false"] {
+  border-left-color: var(--status-critical);
+}
+.stage-name {
+  font-size: var(--fs-2xs);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  margin-bottom: var(--sp-2);
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  font-size: var(--fs-xs);
+}
+.kv dt {
+  color: var(--text-muted);
+}
+.kv dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.markdown {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-loose);
+  color: var(--text-secondary);
+}
+.markdown h1,
+.markdown h2,
+.markdown h3 {
+  color: var(--text-primary);
+  margin: var(--sp-5) 0 var(--sp-3);
+}
+.markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--sp-3) 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-2xs);
+}
+.markdown th,
+.markdown td {
+  border: 1px solid var(--border);
+  padding: var(--sp-1) var(--sp-2);
+  text-align: left;
+}
+.markdown th {
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+.markdown code {
+  font-family: var(--font-mono);
+  background: var(--surface-3);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 0.92em;
+}
+.markdown pre {
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--sp-3);
+  overflow-x: auto;
+}
+.markdown blockquote {
+  border-left: 2px solid var(--status-warn);
+  margin: var(--sp-3) 0;
+  padding-left: var(--sp-4);
+  color: var(--text-primary);
+}
+
+.tooltip {
+  position: fixed;
+  pointer-events: none;
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-2xs);
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  z-index: 50;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 860px) {
+  .shell {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    flex: none;
+    height: auto;
+    position: static;
+  }
+  .main {
+    padding: var(--sp-4);
+  }
+}
