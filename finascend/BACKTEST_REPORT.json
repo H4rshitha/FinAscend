@@ -1,0 +1,2444 @@
+{
+  "generated_at": "2026-08-08T12:19:29.303973+00:00",
+  "config": {
+    "regime": "adversarial",
+    "seed": 42,
+    "n_days": 1500,
+    "step_days": 21,
+    "horizon_days": 90,
+    "n_iterations": 3000,
+    "n_steps": 49,
+    "start_date": "2022-01-01",
+    "end_date": "2026-02-08"
+  },
+  "strategies": [
+    {
+      "name": "rules_baseline",
+      "total_realized_penalty": 1582963.6369815036,
+      "total_hindsight_penalty": 1571211.0733261425,
+      "relative_regret": 0.007479939426904447,
+      "mean_regret": 239.8482378645151,
+      "p95_regret": 662.6586266252106,
+      "over_commitment_steps": 18,
+      "n_steps": 49,
+      "regret_series": [
+        {
+          "as_of": "2023-02-05",
+          "regret": -0.0014965556539595127,
+          "realized_penalty": -0.00020501462292158977,
+          "hindsight_penalty": 0.0012915410310379229,
+          "planned_spend": 4843697.76,
+          "realized_cash": 12954703.220358089,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-02-26",
+          "regret": -0.0009736549043445847,
+          "realized_penalty": 0.00016189322696300224,
+          "hindsight_penalty": 0.0011355481313075869,
+          "planned_spend": 4788224.66,
+          "realized_cash": 11186564.294151139,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-03-19",
+          "regret": -0.001341227600374259,
+          "realized_penalty": -3.900203346274794e-05,
+          "hindsight_penalty": 0.001302225566911511,
+          "planned_spend": 5198725.8,
+          "realized_cash": 11186564.294151139,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-04-09",
+          "regret": -0.00028105400742497295,
+          "realized_penalty": -6.0868529323488484e-05,
+          "hindsight_penalty": 0.00022018547810148448,
+          "planned_spend": 5326511.21,
+          "realized_cash": 11186564.294151139,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-04-30",
+          "regret": -0.0007668303715065121,
+          "realized_penalty": -8.758860138477758e-05,
+          "hindsight_penalty": 0.0006792417701217345,
+          "planned_spend": 5268707.2,
+          "realized_cash": 10659089.955977112,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-05-21",
+          "regret": -0.0004657064701314084,
+          "realized_penalty": -0.0003047371505876072,
+          "hindsight_penalty": 0.00016096931954380123,
+          "planned_spend": 5267373.34,
+          "realized_cash": 9687679.911295053,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-06-11",
+          "regret": -0.001794416916940827,
+          "realized_penalty": 3.565173464594412e-05,
+          "hindsight_penalty": 0.001830068651586771,
+          "planned_spend": 5415338.39,
+          "realized_cash": 9136163.11041503,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-07-02",
+          "regret": 2.5744893949013192e-05,
+          "realized_penalty": 0.0002364834223757498,
+          "hindsight_penalty": 0.0002107385284267366,
+          "planned_spend": 5145973.88,
+          "realized_cash": 8886379.571192212,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-07-23",
+          "regret": -7.463287888094782e-05,
+          "realized_penalty": 0.0001522798895020969,
+          "hindsight_penalty": 0.00022691276838304473,
+          "planned_spend": 5469829.67,
+          "realized_cash": 8852335.335094022,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-08-13",
+          "regret": -0.0009496692840009927,
+          "realized_penalty": -0.00017449553003534674,
+          "hindsight_penalty": 0.000775173753965646,
+          "planned_spend": 5653445.75,
+          "realized_cash": 8852335.335094022,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-09-03",
+          "regret": 1.2923965835943827e-05,
+          "realized_penalty": 0.00020509325384628028,
+          "hindsight_penalty": 0.00019216928801033646,
+          "planned_spend": 5725851.01,
+          "realized_cash": 7173186.8998725405,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-09-24",
+          "regret": -0.00029918723796727134,
+          "realized_penalty": -6.282457207562402e-05,
+          "hindsight_penalty": 0.00023636266589164735,
+          "planned_spend": 5381886.33,
+          "realized_cash": 6059632.13316396,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-10-15",
+          "regret": -0.00032840242647580453,
+          "realized_penalty": 4072.1411104357567,
+          "hindsight_penalty": 4072.141438838183,
+          "planned_spend": 5175896.55,
+          "realized_cash": 4691117.821656095,
+          "over_committed": true
+        },
+        {
+          "as_of": "2023-11-05",
+          "regret": -4.1865476305247284e-05,
+          "realized_penalty": 2984.660536315621,
+          "hindsight_penalty": 2984.660578181097,
+          "planned_spend": 5393933.62,
+          "realized_cash": 4150325.110712476,
+          "over_committed": true
+        },
+        {
+          "as_of": "2023-11-26",
+          "regret": 0.00013933004447608255,
+          "realized_penalty": 14025.321007842243,
+          "hindsight_penalty": 14025.320868512199,
+          "planned_spend": 5410451.08,
+          "realized_cash": 3751163.8047208977,
+          "over_committed": true
+        },
+        {
+          "as_of": "2023-12-17",
+          "regret": 0.00023486543068429455,
+          "realized_penalty": 11062.155386825469,
+          "hindsight_penalty": 11062.155151960038,
+          "planned_spend": 5157025.39,
+          "realized_cash": 3751163.8047208977,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-01-07",
+          "regret": -9.632571527617984e-05,
+          "realized_penalty": 9242.447936613424,
+          "hindsight_penalty": 9242.448032939139,
+          "planned_spend": 4976907.24,
+          "realized_cash": 3257681.7413812475,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-01-28",
+          "regret": 1104.4308877984076,
+          "realized_penalty": 32427.902149860718,
+          "hindsight_penalty": 31323.47126206231,
+          "planned_spend": 4366684.53,
+          "realized_cash": 2690907.5903928014,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-02-18",
+          "regret": 4857.997571861473,
+          "realized_penalty": 89565.60310340158,
+          "hindsight_penalty": 84707.6055315401,
+          "planned_spend": 3751163.8,
+          "realized_cash": 2377474.420051428,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-03-10",
+          "regret": -6.020381988491863e-05,
+          "realized_penalty": 49867.15847558955,
+          "hindsight_penalty": 49867.15853579337,
+          "planned_spend": 4344900.79,
+          "realized_cash": 2377474.420051428,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-03-31",
+          "regret": -0.0017005554182105698,
+          "realized_penalty": 50329.528303940795,
+          "hindsight_penalty": 50329.53000449621,
+          "planned_spend": 3484271.13,
+          "realized_cash": 2377474.420051428,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-04-21",
+          "regret": 5.851520108990371e-05,
+          "realized_penalty": 23936.436525631416,
+          "hindsight_penalty": 23936.436467116215,
+          "planned_spend": 2726860.11,
+          "realized_cash": 2377474.420051428,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-05-12",
+          "regret": -0.0012816579364880454,
+          "realized_penalty": 18791.84548200084,
+          "hindsight_penalty": 18791.846763658777,
+          "planned_spend": 2672914.68,
+          "realized_cash": 2672914.6740616257,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-06-02",
+          "regret": -9.005775063997135e-05,
+          "realized_penalty": 32090.292957375346,
+          "hindsight_penalty": 32090.293047433097,
+          "planned_spend": 3377524.27,
+          "realized_cash": 3222476.2069133474,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-06-23",
+          "regret": 5790.157812825722,
+          "realized_penalty": 8080.567960683071,
+          "hindsight_penalty": 2290.410147857348,
+          "planned_spend": 3751692.41,
+          "realized_cash": 5347684.462017443,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-07-14",
+          "regret": 2.588484855368733e-05,
+          "realized_penalty": 0.0002251618368551135,
+          "hindsight_penalty": 0.00019927698830142618,
+          "planned_spend": 5313437.41,
+          "realized_cash": 6136944.231505041,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-08-04",
+          "regret": -0.0011401213308912701,
+          "realized_penalty": -0.0002258969431044534,
+          "hindsight_penalty": 0.0009142243877868168,
+          "planned_spend": 5479377.23,
+          "realized_cash": 6394219.879816674,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-08-25",
+          "regret": -0.0022879156550625335,
+          "realized_penalty": -4.795150039717557e-06,
+          "hindsight_penalty": 0.002283120505022816,
+          "planned_spend": 6001476.4,
+          "realized_cash": 6394219.879816674,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-09-15",
+          "regret": -0.00014719395402353256,
+          "realized_penalty": 6.955841488670558e-05,
+          "hindsight_penalty": 0.00021675236891023815,
+          "planned_spend": 5950091.0600000005,
+          "realized_cash": 6935311.531782401,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-10-06",
+          "regret": -0.0006382776064099743,
+          "realized_penalty": -0.00027470560038927945,
+          "hindsight_penalty": 0.00036357200602069495,
+          "planned_spend": 5489406.58,
+          "realized_cash": 7459472.508814288,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-10-27",
+          "regret": -0.00023518906021490694,
+          "realized_penalty": 3.6523045017383995e-05,
+          "hindsight_penalty": 0.00027171210523229094,
+          "planned_spend": 5826932.66,
+          "realized_cash": 7459472.508814288,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-11-17",
+          "regret": -0.0006678107187151909,
+          "realized_penalty": -0.00012338405377231536,
+          "hindsight_penalty": 0.0005444266649428755,
+          "planned_spend": 5978291.24,
+          "realized_cash": 8015494.600552526,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-12-08",
+          "regret": -0.0007981475999113172,
+          "realized_penalty": -0.00039558385787531736,
+          "hindsight_penalty": 0.00040256374203599985,
+          "planned_spend": 5470427.4,
+          "realized_cash": 9070829.072566759,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-12-29",
+          "regret": -9.202216914854945e-05,
+          "realized_penalty": 2.2445084620267132e-05,
+          "hindsight_penalty": 0.00011446725376881658,
+          "planned_spend": 5522563.93,
+          "realized_cash": 7943625.357072741,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-01-19",
+          "regret": -0.0007816305432468654,
+          "realized_penalty": 0.0002646337372250855,
+          "hindsight_penalty": 0.0010462642804719509,
+          "planned_spend": 5589796.66,
+          "realized_cash": 7377845.194765148,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-02-09",
+          "regret": -0.0006440000005997718,
+          "realized_penalty": 4.3951507378369584e-05,
+          "hindsight_penalty": 0.0006879515079781413,
+          "planned_spend": 5388582.02,
+          "realized_cash": 6522988.492064216,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-03-02",
+          "regret": -0.0006293458852684125,
+          "realized_penalty": -0.00045975077038165184,
+          "hindsight_penalty": 0.00016959511488676073,
+          "planned_spend": 5469066.33,
+          "realized_cash": 5716688.780427074,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-03-23",
+          "regret": -0.002928913225332508,
+          "realized_penalty": 4617.399085412821,
+          "hindsight_penalty": 4617.402014326046,
+          "planned_spend": 5598815.2700000005,
+          "realized_cash": 4297767.132047176,
+          "over_committed": true
+        },
+        {
+          "as_of": "2025-04-13",
+          "regret": -4.76367786177434e-05,
+          "realized_penalty": 22081.76485311985,
+          "hindsight_penalty": 22081.76490075663,
+          "planned_spend": 5488967.12,
+          "realized_cash": 2702829.6765406756,
+          "over_committed": true
+        },
+        {
+          "as_of": "2025-05-04",
+          "regret": -3.418035339564085e-05,
+          "realized_penalty": 199686.24836297493,
+          "hindsight_penalty": 199686.2483971553,
+          "planned_spend": 5651579.4,
+          "realized_cash": 477590.45047683734,
+          "over_committed": true
+        },
+        {
+          "as_of": "2025-05-25",
+          "regret": 0.0,
+          "realized_penalty": 69037.81939535042,
+          "hindsight_penalty": 69037.81939535042,
+          "planned_spend": 5859103.75,
+          "realized_cash": 0.0,
+          "over_committed": true
+        },
+        {
+          "as_of": "2025-06-15",
+          "regret": 0.0,
+          "realized_penalty": 124168.19622715931,
+          "hindsight_penalty": 124168.19622715931,
+          "planned_spend": 3725504.41,
+          "realized_cash": 0.0,
+          "over_committed": true
+        },
+        {
+          "as_of": "2025-07-06",
+          "regret": 0.0,
+          "realized_penalty": 107930.45440852997,
+          "hindsight_penalty": 107930.45440852997,
+          "planned_spend": 3422869.93,
+          "realized_cash": 0.0,
+          "over_committed": true
+        },
+        {
+          "as_of": "2025-07-27",
+          "regret": 0.0,
+          "realized_penalty": 109727.92676961557,
+          "hindsight_penalty": 109727.92676961557,
+          "planned_spend": 1071406.21,
+          "realized_cash": 0.0,
+          "over_committed": true
+        },
+        {
+          "as_of": "2025-08-17",
+          "regret": 0.0,
+          "realized_penalty": 111057.76184452824,
+          "hindsight_penalty": 111057.76184452824,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-09-07",
+          "regret": 0.0,
+          "realized_penalty": 130771.62824654038,
+          "hindsight_penalty": 130771.62824654038,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-09-28",
+          "regret": 0.0,
+          "realized_penalty": 109763.1120868442,
+          "hindsight_penalty": 109763.1120868442,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-10-19",
+          "regret": 0.0,
+          "realized_penalty": 106844.12128647344,
+          "hindsight_penalty": 106844.12128647344,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-11-09",
+          "regret": 0.0,
+          "realized_penalty": 140801.14444341097,
+          "hindsight_penalty": 140801.14444341097,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        }
+      ]
+    },
+    {
+      "name": "lp_optimizer",
+      "total_realized_penalty": 1599803.0343427043,
+      "total_hindsight_penalty": 1571211.0733261425,
+      "relative_regret": 0.018197402947291278,
+      "mean_regret": 583.5094085012611,
+      "p95_regret": 3356.569458236227,
+      "over_commitment_steps": 19,
+      "n_steps": 49,
+      "regret_series": [
+        {
+          "as_of": "2023-02-05",
+          "regret": -8.555652573704643e-06,
+          "realized_penalty": 0.0012829853784642182,
+          "hindsight_penalty": 0.0012915410310379229,
+          "planned_spend": 4843697.7,
+          "realized_cash": 12954703.220358089,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-02-26",
+          "regret": -0.0005776549109607004,
+          "realized_penalty": 0.0005578932203468865,
+          "hindsight_penalty": 0.0011355481313075869,
+          "planned_spend": 4788224.66,
+          "realized_cash": 11186564.294151139,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-03-19",
+          "regret": -8.12275992007924e-05,
+          "realized_penalty": 0.0012209979677107186,
+          "hindsight_penalty": 0.001302225566911511,
+          "planned_spend": 5198725.72,
+          "realized_cash": 11186564.294151139,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-04-09",
+          "regret": -0.00016105400731321426,
+          "realized_penalty": 5.9131470788270225e-05,
+          "hindsight_penalty": 0.00022018547810148448,
+          "planned_spend": 5326511.19,
+          "realized_cash": 11186564.294151139,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-04-30",
+          "regret": -0.0001668303709477186,
+          "realized_penalty": 0.0005124113991740159,
+          "hindsight_penalty": 0.0006792417701217345,
+          "planned_spend": 5268707.18,
+          "realized_cash": 10659089.955977112,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-05-21",
+          "regret": -0.0019417064715060407,
+          "realized_penalty": -0.0017807371519622394,
+          "hindsight_penalty": 0.00016096931954380123,
+          "planned_spend": 5267373.34,
+          "realized_cash": 9687679.911295053,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-06-11",
+          "regret": -0.00023441691548796374,
+          "realized_penalty": 0.0015956517360988074,
+          "hindsight_penalty": 0.001830068651586771,
+          "planned_spend": 5415338.36,
+          "realized_cash": 9136163.11041503,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-07-02",
+          "regret": -0.002430255095299799,
+          "realized_penalty": -0.0022195165668730623,
+          "hindsight_penalty": 0.0002107385284267366,
+          "planned_spend": 5145973.95,
+          "realized_cash": 8886379.571192212,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-07-23",
+          "regret": -0.00015463287895545365,
+          "realized_penalty": 7.22798894275911e-05,
+          "hindsight_penalty": 0.00022691276838304473,
+          "planned_spend": 5469829.66,
+          "realized_cash": 8852335.335094022,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-08-13",
+          "regret": -8.566928319633002e-05,
+          "realized_penalty": 0.000689504470769316,
+          "hindsight_penalty": 0.000775173753965646,
+          "planned_spend": 5653445.7,
+          "realized_cash": 8852335.335094022,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-09-03",
+          "regret": -0.000537076033744961,
+          "realized_penalty": -0.0003449067457346245,
+          "hindsight_penalty": 0.00019216928801033646,
+          "planned_spend": 5725851.1,
+          "realized_cash": 7173186.8998725405,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-09-24",
+          "regret": -0.00024718723791884256,
+          "realized_penalty": -1.0824572027195234e-05,
+          "hindsight_penalty": 0.00023636266589164735,
+          "planned_spend": 5381886.34,
+          "realized_cash": 6059632.13316396,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-10-15",
+          "regret": -0.0006444024288612127,
+          "realized_penalty": 4072.1407944357543,
+          "hindsight_penalty": 4072.141438838183,
+          "planned_spend": 5175896.5200000005,
+          "realized_cash": 4691117.821656095,
+          "over_committed": true
+        },
+        {
+          "as_of": "2023-11-05",
+          "regret": -8.986547663880629e-05,
+          "realized_penalty": 2984.6604883156206,
+          "hindsight_penalty": 2984.660578181097,
+          "planned_spend": 5393933.64,
+          "realized_cash": 4150325.110712476,
+          "over_committed": true
+        },
+        {
+          "as_of": "2023-11-26",
+          "regret": -0.0002726699549384648,
+          "realized_penalty": 14025.320595842244,
+          "hindsight_penalty": 14025.320868512199,
+          "planned_spend": 5410451.13,
+          "realized_cash": 3751163.8047208977,
+          "over_committed": true
+        },
+        {
+          "as_of": "2023-12-17",
+          "regret": -0.0006931345687917201,
+          "realized_penalty": 11062.15445882547,
+          "hindsight_penalty": 11062.155151960038,
+          "planned_spend": 5157025.36,
+          "realized_cash": 3751163.8047208977,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-01-07",
+          "regret": -0.0005923257158428896,
+          "realized_penalty": 9242.447440613423,
+          "hindsight_penalty": 9242.448032939139,
+          "planned_spend": 4976907.3100000005,
+          "realized_cash": 3257681.7413812475,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-01-28",
+          "regret": 1104.4308877984076,
+          "realized_penalty": 32427.902149860718,
+          "hindsight_penalty": 31323.47126206231,
+          "planned_spend": 4366684.5,
+          "realized_cash": 2690907.5903928014,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-02-18",
+          "regret": 4857.995171861476,
+          "realized_penalty": 89565.60070340158,
+          "hindsight_penalty": 84707.6055315401,
+          "planned_spend": 3751163.85,
+          "realized_cash": 2377474.420051428,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-03-10",
+          "regret": -0.0002682038175407797,
+          "realized_penalty": 49867.158267589555,
+          "hindsight_penalty": 49867.15853579337,
+          "planned_spend": 4344900.83,
+          "realized_cash": 2377474.420051428,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-03-31",
+          "regret": -0.0005405554184108041,
+          "realized_penalty": 50329.529463940795,
+          "hindsight_penalty": 50329.53000449621,
+          "planned_spend": 3484271.08,
+          "realized_cash": 2377474.420051428,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-04-21",
+          "regret": -0.00020748479801113717,
+          "realized_penalty": 23936.436259631417,
+          "hindsight_penalty": 23936.436467116215,
+          "planned_spend": 2726860.12,
+          "realized_cash": 2377474.420051428,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-05-12",
+          "regret": -0.00013154028420103714,
+          "realized_penalty": 18791.846632118493,
+          "hindsight_penalty": 18791.846763658777,
+          "planned_spend": 2672914.64,
+          "realized_cash": 2672914.6740616257,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-06-02",
+          "regret": 14950.468879025128,
+          "realized_penalty": 47040.761926458224,
+          "hindsight_penalty": 32090.293047433097,
+          "planned_spend": 3377524.28,
+          "realized_cash": 3222476.2069133474,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-06-23",
+          "regret": 7679.081700825724,
+          "realized_penalty": 9969.491848683072,
+          "hindsight_penalty": 2290.410147857348,
+          "planned_spend": 5422033.79,
+          "realized_cash": 5347684.462017443,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-07-14",
+          "regret": -0.0007541151485405862,
+          "realized_penalty": -0.00055483816023916,
+          "hindsight_penalty": 0.00019927698830142618,
+          "planned_spend": 5313437.46,
+          "realized_cash": 6136944.231505041,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-08-04",
+          "regret": -0.0002101213300251402,
+          "realized_penalty": 0.0007041030577616766,
+          "hindsight_penalty": 0.0009142243877868168,
+          "planned_spend": 5479377.19,
+          "realized_cash": 6394219.879816674,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-08-25",
+          "regret": -4.791565297637126e-05,
+          "realized_penalty": 0.002235204852046445,
+          "hindsight_penalty": 0.002283120505022816,
+          "planned_spend": 6001476.36,
+          "realized_cash": 6394219.879816674,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-09-15",
+          "regret": -0.0009691939496668055,
+          "realized_penalty": -0.0007524415807565674,
+          "hindsight_penalty": 0.00021675236891023815,
+          "planned_spend": 5950091.12,
+          "realized_cash": 6935311.531782401,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-10-06",
+          "regret": -0.00030227760805282743,
+          "realized_penalty": 6.129439796786754e-05,
+          "hindsight_penalty": 0.00036357200602069495,
+          "planned_spend": 5489406.54,
+          "realized_cash": 7459472.508814288,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-10-27",
+          "regret": -0.0006371890605892986,
+          "realized_penalty": -0.00036547695535700764,
+          "hindsight_penalty": 0.00027171210523229094,
+          "planned_spend": 5826932.66,
+          "realized_cash": 7459472.508814288,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-11-17",
+          "regret": -0.0001818107182625681,
+          "realized_penalty": 0.0003626159466803074,
+          "hindsight_penalty": 0.0005444266649428755,
+          "planned_spend": 5978291.2,
+          "realized_cash": 8015494.600552526,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-12-08",
+          "regret": -0.0008581475999671967,
+          "realized_penalty": -0.0004555838579311968,
+          "hindsight_penalty": 0.00040256374203599985,
+          "planned_spend": 5470427.36,
+          "realized_cash": 9070829.072566759,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-12-29",
+          "regret": -0.0007920221698004752,
+          "realized_penalty": -0.0006775549160316586,
+          "hindsight_penalty": 0.00011446725376881658,
+          "planned_spend": 5522563.97,
+          "realized_cash": 7943625.357072741,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-01-19",
+          "regret": -1.963054253719754e-05,
+          "realized_penalty": 0.0010266337379347533,
+          "hindsight_penalty": 0.0010462642804719509,
+          "planned_spend": 5589796.66,
+          "realized_cash": 7377845.194765148,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-02-09",
+          "regret": 0.0,
+          "realized_penalty": 0.0006879515079781413,
+          "hindsight_penalty": 0.0006879515079781413,
+          "planned_spend": 5388582.0,
+          "realized_cash": 6522988.492064216,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-03-02",
+          "regret": -0.0005053458851529285,
+          "realized_penalty": -0.0003357507702661678,
+          "hindsight_penalty": 0.00016959511488676073,
+          "planned_spend": 5469066.34,
+          "realized_cash": 5716688.780427074,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-03-23",
+          "regret": -0.0001729132236505393,
+          "realized_penalty": 4617.401841412822,
+          "hindsight_penalty": 4617.402014326046,
+          "planned_spend": 5598815.2,
+          "realized_cash": 4297767.132047176,
+          "over_committed": true
+        },
+        {
+          "as_of": "2025-04-13",
+          "regret": -7.163677582866512e-05,
+          "realized_penalty": 22081.764829119853,
+          "hindsight_penalty": 22081.76490075663,
+          "planned_spend": 5488967.15,
+          "realized_cash": 2702829.6765406756,
+          "over_committed": true
+        },
+        {
+          "as_of": "2025-05-04",
+          "regret": -3.418035339564085e-05,
+          "realized_penalty": 199686.24836297493,
+          "hindsight_penalty": 199686.2483971553,
+          "planned_spend": 5651579.46,
+          "realized_cash": 477590.45047683734,
+          "over_committed": true
+        },
+        {
+          "as_of": "2025-05-25",
+          "regret": 0.0,
+          "realized_penalty": 69037.81939535042,
+          "hindsight_penalty": 69037.81939535042,
+          "planned_spend": 5859103.7,
+          "realized_cash": 0.0,
+          "over_committed": true
+        },
+        {
+          "as_of": "2025-06-15",
+          "regret": 0.0,
+          "realized_penalty": 124168.19622715931,
+          "hindsight_penalty": 124168.19622715931,
+          "planned_spend": 4619581.86,
+          "realized_cash": 0.0,
+          "over_committed": true
+        },
+        {
+          "as_of": "2025-07-06",
+          "regret": 0.0,
+          "realized_penalty": 107930.45440852997,
+          "hindsight_penalty": 107930.45440852997,
+          "planned_spend": 3422869.93,
+          "realized_cash": 0.0,
+          "over_committed": true
+        },
+        {
+          "as_of": "2025-07-27",
+          "regret": 0.0,
+          "realized_penalty": 109727.92676961557,
+          "hindsight_penalty": 109727.92676961557,
+          "planned_spend": 1071406.21,
+          "realized_cash": 0.0,
+          "over_committed": true
+        },
+        {
+          "as_of": "2025-08-17",
+          "regret": 0.0,
+          "realized_penalty": 111057.76184452824,
+          "hindsight_penalty": 111057.76184452824,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-09-07",
+          "regret": 0.0,
+          "realized_penalty": 130771.62824654038,
+          "hindsight_penalty": 130771.62824654038,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-09-28",
+          "regret": 0.0,
+          "realized_penalty": 109763.1120868442,
+          "hindsight_penalty": 109763.1120868442,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-10-19",
+          "regret": 0.0,
+          "realized_penalty": 106844.12128647344,
+          "hindsight_penalty": 106844.12128647344,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-11-09",
+          "regret": 0.0,
+          "realized_penalty": 140801.14444341097,
+          "hindsight_penalty": 140801.14444341097,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        }
+      ]
+    },
+    {
+      "name": "dp_knapsack",
+      "total_realized_penalty": 1600371.7835987043,
+      "total_hindsight_penalty": 1571211.0733261425,
+      "relative_regret": 0.01855938439310423,
+      "mean_regret": 595.1165361747301,
+      "p95_regret": 3364.769441436226,
+      "over_commitment_steps": 19,
+      "n_steps": 49,
+      "regret_series": [
+        {
+          "as_of": "2023-02-05",
+          "regret": 25.33944344434574,
+          "realized_penalty": 25.340734985376777,
+          "hindsight_penalty": 0.0012915410310379229,
+          "planned_spend": 4842092.61,
+          "realized_cash": 12954703.220358089,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-02-26",
+          "regret": 11.839716345093994,
+          "realized_penalty": 11.8408518932253,
+          "hindsight_penalty": 0.0011355481313075869,
+          "planned_spend": 4787699.29,
+          "realized_cash": 11186564.294151139,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-03-19",
+          "regret": 38.641454772399086,
+          "realized_penalty": 38.642756997965996,
+          "hindsight_penalty": 0.001302225566911511,
+          "planned_spend": 5196210.0,
+          "realized_cash": 11186564.294151139,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-04-09",
+          "regret": 10.14305494599354,
+          "realized_penalty": 10.143275131471642,
+          "hindsight_penalty": 0.00022018547810148448,
+          "planned_spend": 5325436.95,
+          "realized_cash": 11186564.294151139,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-04-30",
+          "regret": 23.039545169629413,
+          "realized_penalty": 23.040224411399535,
+          "hindsight_penalty": 0.0006792417701217345,
+          "planned_spend": 5267598.46,
+          "realized_cash": 10659089.955977112,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-05-21",
+          "regret": 20.696516293529875,
+          "realized_penalty": 20.69667726284942,
+          "hindsight_penalty": 0.00016096931954380123,
+          "planned_spend": 5265771.47,
+          "realized_cash": 9687679.911295053,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-06-11",
+          "regret": 19.29762558308366,
+          "realized_penalty": 19.299455651735247,
+          "hindsight_penalty": 0.001830068651586771,
+          "planned_spend": 5413509.8,
+          "realized_cash": 9136163.11041503,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-07-02",
+          "regret": 42.02080974489249,
+          "realized_penalty": 42.02102048342091,
+          "hindsight_penalty": 0.0002107385284267366,
+          "planned_spend": 5144503.8100000005,
+          "realized_cash": 8886379.571192212,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-07-23",
+          "regret": 13.209557367120636,
+          "realized_penalty": 13.20978427988902,
+          "hindsight_penalty": 0.00022691276838304473,
+          "planned_spend": 5468294.4,
+          "realized_cash": 8852335.335094022,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-08-13",
+          "regret": 26.309258330714005,
+          "realized_penalty": 26.31003350446797,
+          "hindsight_penalty": 0.000775173753965646,
+          "planned_spend": 5652136.36,
+          "realized_cash": 8852335.335094022,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-09-03",
+          "regret": 8.846726923966175,
+          "realized_penalty": 8.846919093254185,
+          "hindsight_penalty": 0.00019216928801033646,
+          "planned_spend": 5725027.63,
+          "realized_cash": 7173186.8998725405,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-09-24",
+          "regret": 10.005180812762271,
+          "realized_penalty": 10.005417175428162,
+          "hindsight_penalty": 0.00023636266589164735,
+          "planned_spend": 5380769.52,
+          "realized_cash": 6059632.13316396,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-10-15",
+          "regret": 11.825419597573273,
+          "realized_penalty": 4083.9668584357564,
+          "hindsight_penalty": 4072.141438838183,
+          "planned_spend": 5174055.86,
+          "realized_cash": 4691117.821656095,
+          "over_committed": true
+        },
+        {
+          "as_of": "2023-11-05",
+          "regret": 31.219748134524707,
+          "realized_penalty": 3015.880326315622,
+          "hindsight_penalty": 2984.660578181097,
+          "planned_spend": 5392238.84,
+          "realized_cash": 4150325.110712476,
+          "over_committed": true
+        },
+        {
+          "as_of": "2023-11-26",
+          "regret": 0.00013933004447608255,
+          "realized_penalty": 14025.321007842243,
+          "hindsight_penalty": 14025.320868512199,
+          "planned_spend": 5408479.67,
+          "realized_cash": 3751163.8047208977,
+          "over_committed": true
+        },
+        {
+          "as_of": "2023-12-17",
+          "regret": 0.00023486543068429455,
+          "realized_penalty": 11062.155386825469,
+          "hindsight_penalty": 11062.155151960038,
+          "planned_spend": 5155355.74,
+          "realized_cash": 3751163.8047208977,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-01-07",
+          "regret": -9.632571527617984e-05,
+          "realized_penalty": 9242.447936613424,
+          "hindsight_penalty": 9242.448032939139,
+          "planned_spend": 4974373.88,
+          "realized_cash": 3257681.7413812475,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-01-28",
+          "regret": 1116.9956297984063,
+          "realized_penalty": 32440.466891860717,
+          "hindsight_penalty": 31323.47126206231,
+          "planned_spend": 4364969.33,
+          "realized_cash": 2690907.5903928014,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-02-18",
+          "regret": 4863.285315861474,
+          "realized_penalty": 89570.89084740158,
+          "hindsight_penalty": 84707.6055315401,
+          "planned_spend": 3750927.74,
+          "realized_cash": 2377474.420051428,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-03-10",
+          "regret": -6.020381988491863e-05,
+          "realized_penalty": 49867.15847558955,
+          "hindsight_penalty": 49867.15853579337,
+          "planned_spend": 4342445.1,
+          "realized_cash": 2377474.420051428,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-03-31",
+          "regret": -0.0017005554182105698,
+          "realized_penalty": 50329.528303940795,
+          "hindsight_penalty": 50329.53000449621,
+          "planned_spend": 3484024.25,
+          "realized_cash": 2377474.420051428,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-04-21",
+          "regret": 1.3378305152000394,
+          "realized_penalty": 23937.774297631415,
+          "hindsight_penalty": 23936.436467116215,
+          "planned_spend": 2726778.59,
+          "realized_cash": 2377474.420051428,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-05-12",
+          "regret": 3.389712459716975,
+          "realized_penalty": 18795.236476118494,
+          "hindsight_penalty": 18791.846763658777,
+          "planned_spend": 2672831.54,
+          "realized_cash": 2672914.6740616257,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-06-02",
+          "regret": 14957.84035902513,
+          "realized_penalty": 47048.133406458226,
+          "hindsight_penalty": 32090.293047433097,
+          "planned_spend": 3377329.27,
+          "realized_cash": 3222476.2069133474,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-06-23",
+          "regret": 7707.501360825723,
+          "realized_penalty": 9997.911508683072,
+          "hindsight_penalty": 2290.410147857348,
+          "planned_spend": 5420537.37,
+          "realized_cash": 5347684.462017443,
+          "over_committed": true
+        },
+        {
+          "as_of": "2024-07-14",
+          "regret": 15.963019884849666,
+          "realized_penalty": 15.963219161837968,
+          "hindsight_penalty": 0.00019927698830142618,
+          "planned_spend": 5312331.2,
+          "realized_cash": 6136944.231505041,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-08-04",
+          "regret": 23.5194738786689,
+          "realized_penalty": 23.52038810305669,
+          "hindsight_penalty": 0.0009142243877868168,
+          "planned_spend": 5477213.88,
+          "realized_cash": 6394219.879816674,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-08-25",
+          "regret": 4.822562084345566,
+          "realized_penalty": 4.824845204850589,
+          "hindsight_penalty": 0.002283120505022816,
+          "planned_spend": 6000915.37,
+          "realized_cash": 6394219.879816674,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-09-15",
+          "regret": 11.144586806046846,
+          "realized_penalty": 11.144803558415756,
+          "hindsight_penalty": 0.00021675236891023815,
+          "planned_spend": 5949056.46,
+          "realized_cash": 6935311.531782401,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-10-06",
+          "regret": 9.430741722393524,
+          "realized_penalty": 9.431105294399545,
+          "hindsight_penalty": 0.00036357200602069495,
+          "planned_spend": 5488432.08,
+          "realized_cash": 7459472.508814288,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-10-27",
+          "regret": 24.144278810938122,
+          "realized_penalty": 24.144550523043353,
+          "hindsight_penalty": 0.00027171210523229094,
+          "planned_spend": 5825698.25,
+          "realized_cash": 7459472.508814288,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-11-17",
+          "regret": 37.05725418928134,
+          "realized_penalty": 37.05779861594628,
+          "hindsight_penalty": 0.0005444266649428755,
+          "planned_spend": 5976540.57,
+          "realized_cash": 8015494.600552526,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-12-08",
+          "regret": 13.83386985240085,
+          "realized_penalty": 13.834272416142886,
+          "hindsight_penalty": 0.00040256374203599985,
+          "planned_spend": 5468664.99,
+          "realized_cash": 9070829.072566759,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-12-29",
+          "regret": 13.538603977830615,
+          "realized_penalty": 13.538718445084383,
+          "hindsight_penalty": 0.00011446725376881658,
+          "planned_spend": 5520989.64,
+          "realized_cash": 7943625.357072741,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-01-19",
+          "regret": 10.140212369456234,
+          "realized_penalty": 10.141258633736706,
+          "hindsight_penalty": 0.0010462642804719509,
+          "planned_spend": 5588673.93,
+          "realized_cash": 7377845.194765148,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-02-09",
+          "regret": 9.708647999999044,
+          "realized_penalty": 9.709335951507022,
+          "hindsight_penalty": 0.0006879515079781413,
+          "planned_spend": 5387920.85,
+          "realized_cash": 6522988.492064216,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-03-02",
+          "regret": 31.08646465411483,
+          "realized_penalty": 31.086634249229718,
+          "hindsight_penalty": 0.00016959511488676073,
+          "planned_spend": 5467821.12,
+          "realized_cash": 5716688.780427074,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-03-23",
+          "regret": 9.709787086775577,
+          "realized_penalty": 4627.1118014128215,
+          "hindsight_penalty": 4617.402014326046,
+          "planned_spend": 5596265.47,
+          "realized_cash": 4297767.132047176,
+          "over_committed": true
+        },
+        {
+          "as_of": "2025-04-13",
+          "regret": 3.069920363221172,
+          "realized_penalty": 22084.83482111985,
+          "hindsight_penalty": 22081.76490075663,
+          "planned_spend": 5488159.61,
+          "realized_cash": 2702829.6765406756,
+          "over_committed": true
+        },
+        {
+          "as_of": "2025-05-04",
+          "regret": 0.7580658196529839,
+          "realized_penalty": 199687.00646297494,
+          "hindsight_penalty": 199686.2483971553,
+          "planned_spend": 5649979.23,
+          "realized_cash": 477590.45047683734,
+          "over_committed": true
+        },
+        {
+          "as_of": "2025-05-25",
+          "regret": 0.0,
+          "realized_penalty": 69037.81939535042,
+          "hindsight_penalty": 69037.81939535042,
+          "planned_spend": 5856644.32,
+          "realized_cash": 0.0,
+          "over_committed": true
+        },
+        {
+          "as_of": "2025-06-15",
+          "regret": 0.0,
+          "realized_penalty": 124168.19622715931,
+          "hindsight_penalty": 124168.19622715931,
+          "planned_spend": 4617558.0600000005,
+          "realized_cash": 0.0,
+          "over_committed": true
+        },
+        {
+          "as_of": "2025-07-06",
+          "regret": 0.0,
+          "realized_penalty": 107930.45440852997,
+          "hindsight_penalty": 107930.45440852997,
+          "planned_spend": 3422669.71,
+          "realized_cash": 0.0,
+          "over_committed": true
+        },
+        {
+          "as_of": "2025-07-27",
+          "regret": 0.0,
+          "realized_penalty": 109727.92676961557,
+          "hindsight_penalty": 109727.92676961557,
+          "planned_spend": 1071370.54,
+          "realized_cash": 0.0,
+          "over_committed": true
+        },
+        {
+          "as_of": "2025-08-17",
+          "regret": 0.0,
+          "realized_penalty": 111057.76184452824,
+          "hindsight_penalty": 111057.76184452824,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-09-07",
+          "regret": 0.0,
+          "realized_penalty": 130771.62824654038,
+          "hindsight_penalty": 130771.62824654038,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-09-28",
+          "regret": 0.0,
+          "realized_penalty": 109763.1120868442,
+          "hindsight_penalty": 109763.1120868442,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-10-19",
+          "regret": 0.0,
+          "realized_penalty": 106844.12128647344,
+          "hindsight_penalty": 106844.12128647344,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-11-09",
+          "regret": 0.0,
+          "realized_penalty": 140801.14444341097,
+          "hindsight_penalty": 140801.14444341097,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        }
+      ]
+    },
+    {
+      "name": "chance_constrained",
+      "total_realized_penalty": 3477826.7342048665,
+      "total_hindsight_penalty": 1571211.0733261425,
+      "relative_regret": 1.2134688287567588,
+      "mean_regret": 38910.52369140253,
+      "p95_regret": 127226.79423371164,
+      "over_commitment_steps": 0,
+      "n_steps": 49,
+      "regret_series": [
+        {
+          "as_of": "2023-02-05",
+          "regret": -8.555652573704643e-06,
+          "realized_penalty": 0.0012829853784642182,
+          "hindsight_penalty": 0.0012915410310379229,
+          "planned_spend": 4843697.7,
+          "realized_cash": 12954703.220358089,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-02-26",
+          "regret": -0.0005776549109607004,
+          "realized_penalty": 0.0005578932203468865,
+          "hindsight_penalty": 0.0011355481313075869,
+          "planned_spend": 4788224.66,
+          "realized_cash": 11186564.294151139,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-03-19",
+          "regret": -8.12275992007924e-05,
+          "realized_penalty": 0.0012209979677107186,
+          "hindsight_penalty": 0.001302225566911511,
+          "planned_spend": 5198725.72,
+          "realized_cash": 11186564.294151139,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-04-09",
+          "regret": -0.00016105400731321426,
+          "realized_penalty": 5.9131470788270225e-05,
+          "hindsight_penalty": 0.00022018547810148448,
+          "planned_spend": 5326511.19,
+          "realized_cash": 11186564.294151139,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-04-30",
+          "regret": -0.0001668303709477186,
+          "realized_penalty": 0.0005124113991740159,
+          "hindsight_penalty": 0.0006792417701217345,
+          "planned_spend": 5268707.18,
+          "realized_cash": 10659089.955977112,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-05-21",
+          "regret": 14040.49533829353,
+          "realized_penalty": 14040.495499262848,
+          "hindsight_penalty": 0.00016096931954380123,
+          "planned_spend": 3527428.74,
+          "realized_cash": 9687679.911295053,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-06-11",
+          "regret": -0.00023441691548796374,
+          "realized_penalty": 0.0015956517360988074,
+          "hindsight_penalty": 0.001830068651586771,
+          "planned_spend": 5415338.36,
+          "realized_cash": 9136163.11041503,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-07-02",
+          "regret": -0.002430255095299799,
+          "realized_penalty": -0.0022195165668730623,
+          "hindsight_penalty": 0.0002107385284267366,
+          "planned_spend": 5145973.95,
+          "realized_cash": 8886379.571192212,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-07-23",
+          "regret": 7065.650665367121,
+          "realized_penalty": 7065.650892279889,
+          "hindsight_penalty": 0.00022691276838304473,
+          "planned_spend": 3827994.61,
+          "realized_cash": 8852335.335094022,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-08-13",
+          "regret": 33681.90408833071,
+          "realized_penalty": 33681.90486350447,
+          "hindsight_penalty": 0.000775173753965646,
+          "planned_spend": 2293137.21,
+          "realized_cash": 8852335.335094022,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-09-03",
+          "regret": 8016.191062923966,
+          "realized_penalty": 8016.191255093254,
+          "hindsight_penalty": 0.00019216928801033646,
+          "planned_spend": 3721803.2,
+          "realized_cash": 7173186.8998725405,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-09-24",
+          "regret": 5129.951422812761,
+          "realized_penalty": 5129.951659175427,
+          "hindsight_penalty": 0.00023636266589164735,
+          "planned_spend": 4431895.29,
+          "realized_cash": 6059632.13316396,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-10-15",
+          "regret": 46708.306727508774,
+          "realized_penalty": 50780.448166346956,
+          "hindsight_penalty": 4072.141438838183,
+          "planned_spend": 2567638.18,
+          "realized_cash": 4691117.821656095,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-11-05",
+          "regret": 26721.00699584447,
+          "realized_penalty": 29705.667574025567,
+          "hindsight_penalty": 2984.660578181097,
+          "planned_spend": 741134.58,
+          "realized_cash": 4150325.110712476,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-11-26",
+          "regret": 122199.01665747365,
+          "realized_penalty": 136224.33752598584,
+          "hindsight_penalty": 14025.320868512199,
+          "planned_spend": 0.0,
+          "realized_cash": 3751163.8047208977,
+          "over_committed": false
+        },
+        {
+          "as_of": "2023-12-17",
+          "regret": 127280.20783618605,
+          "realized_penalty": 138342.36298814608,
+          "hindsight_penalty": 11062.155151960038,
+          "planned_spend": 0.0,
+          "realized_cash": 3751163.8047208977,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-01-07",
+          "regret": 100458.40125398424,
+          "realized_penalty": 109700.84928692337,
+          "hindsight_penalty": 9242.448032939139,
+          "planned_spend": 0.0,
+          "realized_cash": 3257681.7413812475,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-01-28",
+          "regret": 45282.77562979841,
+          "realized_penalty": 76606.24689186072,
+          "hindsight_penalty": 31323.47126206231,
+          "planned_spend": 0.0,
+          "realized_cash": 2690907.5903928014,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-02-18",
+          "regret": 106076.73891586148,
+          "realized_penalty": 190784.34444740159,
+          "hindsight_penalty": 84707.6055315401,
+          "planned_spend": 0.0,
+          "realized_cash": 2377474.420051428,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-03-10",
+          "regret": 78972.7956292773,
+          "realized_penalty": 128839.95416507068,
+          "hindsight_penalty": 49867.15853579337,
+          "planned_spend": 0.0,
+          "realized_cash": 2377474.420051428,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-03-31",
+          "regret": 74181.18359600002,
+          "realized_penalty": 124510.71360049622,
+          "hindsight_penalty": 50329.53000449621,
+          "planned_spend": 0.0,
+          "realized_cash": 2377474.420051428,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-04-21",
+          "regret": 68837.75019279291,
+          "realized_penalty": 92774.18665990913,
+          "hindsight_penalty": 23936.436467116215,
+          "planned_spend": 0.0,
+          "realized_cash": 2377474.420051428,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-05-12",
+          "regret": 71940.85478045972,
+          "realized_penalty": 90732.70154411849,
+          "hindsight_penalty": 18791.846763658777,
+          "planned_spend": 136414.17,
+          "realized_cash": 2672914.6740616257,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-06-02",
+          "regret": 140837.68627902513,
+          "realized_penalty": 172927.97932645824,
+          "hindsight_penalty": 32090.293047433097,
+          "planned_spend": 0.0,
+          "realized_cash": 3222476.2069133474,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-06-23",
+          "regret": 70948.39732582573,
+          "realized_penalty": 73238.80747368307,
+          "hindsight_penalty": 2290.410147857348,
+          "planned_spend": 0.0,
+          "realized_cash": 5347684.462017443,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-07-14",
+          "regret": 46436.49096988485,
+          "realized_penalty": 46436.49116916184,
+          "hindsight_penalty": 0.00019927698830142618,
+          "planned_spend": 2084691.6,
+          "realized_cash": 6136944.231505041,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-08-04",
+          "regret": 80120.36618987867,
+          "realized_penalty": 80120.36710410306,
+          "hindsight_penalty": 0.0009142243877868168,
+          "planned_spend": 1375019.16,
+          "realized_cash": 6394219.879816674,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-08-25",
+          "regret": 167071.05109408437,
+          "realized_penalty": 167071.05337720487,
+          "hindsight_penalty": 0.002283120505022816,
+          "planned_spend": 454718.78,
+          "realized_cash": 6394219.879816674,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-09-15",
+          "regret": 70954.87000880606,
+          "realized_penalty": 70954.87022555842,
+          "hindsight_penalty": 0.00021675236891023815,
+          "planned_spend": 1721523.8800000001,
+          "realized_cash": 6935311.531782401,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-10-06",
+          "regret": 14373.798173722393,
+          "realized_penalty": 14373.798537294399,
+          "hindsight_penalty": 0.00036357200602069495,
+          "planned_spend": 2680358.74,
+          "realized_cash": 7459472.508814288,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-10-27",
+          "regret": 40158.43040481094,
+          "realized_penalty": 40158.43067652304,
+          "hindsight_penalty": 0.00027171210523229094,
+          "planned_spend": 1451392.48,
+          "realized_cash": 7459472.508814288,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-11-17",
+          "regret": 53285.78738518929,
+          "realized_penalty": 53285.78792961595,
+          "hindsight_penalty": 0.0005444266649428755,
+          "planned_spend": 1928609.18,
+          "realized_cash": 8015494.600552526,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-12-08",
+          "regret": 12247.3082098524,
+          "realized_penalty": 12247.308612416142,
+          "hindsight_penalty": 0.00040256374203599985,
+          "planned_spend": 3702423.49,
+          "realized_cash": 9070829.072566759,
+          "over_committed": false
+        },
+        {
+          "as_of": "2024-12-29",
+          "regret": 8695.61170397783,
+          "realized_penalty": 8695.611818445082,
+          "hindsight_penalty": 0.00011446725376881658,
+          "planned_spend": 4478224.76,
+          "realized_cash": 7943625.357072741,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-01-19",
+          "regret": 1387.6461403694577,
+          "realized_penalty": 1387.647186633738,
+          "hindsight_penalty": 0.0010462642804719509,
+          "planned_spend": 4123700.38,
+          "realized_cash": 7377845.194765148,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-02-09",
+          "regret": 10927.947408,
+          "realized_penalty": 10927.948095951508,
+          "hindsight_penalty": 0.0006879515079781413,
+          "planned_spend": 4087635.88,
+          "realized_cash": 6522988.492064216,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-03-02",
+          "regret": 31909.290044654113,
+          "realized_penalty": 31909.290214249228,
+          "hindsight_penalty": 0.00016959511488676073,
+          "planned_spend": 2842382.3899999997,
+          "realized_cash": 5716688.780427074,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-03-23",
+          "regret": 127146.67383000001,
+          "realized_penalty": 131764.07584432606,
+          "hindsight_penalty": 4617.402014326046,
+          "planned_spend": 295396.91,
+          "realized_cash": 4297767.132047176,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-04-13",
+          "regret": 84217.57229532217,
+          "realized_penalty": 106299.33719607879,
+          "hindsight_penalty": 22081.76490075663,
+          "planned_spend": 0.0,
+          "realized_cash": 2702829.6765406756,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-05-04",
+          "regret": 9303.50628239999,
+          "realized_penalty": 208989.75467955528,
+          "hindsight_penalty": 199686.2483971553,
+          "planned_spend": 0.0,
+          "realized_cash": 477590.45047683734,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-05-25",
+          "regret": 0.0,
+          "realized_penalty": 69037.81939535042,
+          "hindsight_penalty": 69037.81939535042,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-06-15",
+          "regret": 0.0,
+          "realized_penalty": 124168.19622715931,
+          "hindsight_penalty": 124168.19622715931,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-07-06",
+          "regret": 0.0,
+          "realized_penalty": 107930.45440852997,
+          "hindsight_penalty": 107930.45440852997,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-07-27",
+          "regret": 0.0,
+          "realized_penalty": 109727.92676961557,
+          "hindsight_penalty": 109727.92676961557,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-08-17",
+          "regret": 0.0,
+          "realized_penalty": 111057.76184452824,
+          "hindsight_penalty": 111057.76184452824,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-09-07",
+          "regret": 0.0,
+          "realized_penalty": 130771.62824654038,
+          "hindsight_penalty": 130771.62824654038,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-09-28",
+          "regret": 0.0,
+          "realized_penalty": 109763.1120868442,
+          "hindsight_penalty": 109763.1120868442,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-10-19",
+          "regret": 0.0,
+          "realized_penalty": 106844.12128647344,
+          "hindsight_penalty": 106844.12128647344,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        },
+        {
+          "as_of": "2025-11-09",
+          "regret": 0.0,
+          "realized_penalty": 140801.14444341097,
+          "hindsight_penalty": 140801.14444341097,
+          "planned_spend": 0.0,
+          "realized_cash": 0.0,
+          "over_committed": false
+        }
+      ]
+    }
+  ],
+  "calibration": {
+    "nominal": 0.95,
+    "empirical": 0.9555555555555556,
+    "n_observations": 4410,
+    "mean_interval_width": 194499.5342484198,
+    "verdict": "Intervals are well calibrated: 95.6% empirical coverage against a 95% nominal level.",
+    "previous_build": {
+      "pooled": 0.851,
+      "pooled_config": "21-day steps, same settings as this run",
+      "diagnostic_before_pooled": 0.859,
+      "diagnostic_after_pooled": 0.954,
+      "sarimax_branch": 0.96,
+      "holt_winters_branch": 0.572,
+      "diagnostic_config": "14-day steps, 73 steps, 6,570 pairs",
+      "note": "measured before the conformal fix"
+    },
+    "by_horizon": [
+      {
+        "label": "1\u20137",
+        "from": 1,
+        "to": 7,
+        "n": 343,
+        "coverage": 0.956268221574344,
+        "mean_width": 188857.1772509752
+      },
+      {
+        "label": "8\u201314",
+        "from": 8,
+        "to": 14,
+        "n": 343,
+        "coverage": 0.9475218658892128,
+        "mean_width": 190944.0242677227
+      },
+      {
+        "label": "15\u201330",
+        "from": 15,
+        "to": 30,
+        "n": 784,
+        "coverage": 0.9591836734693877,
+        "mean_width": 192646.84242860362
+      },
+      {
+        "label": "31\u201345",
+        "from": 31,
+        "to": 45,
+        "n": 735,
+        "coverage": 0.9428571428571428,
+        "mean_width": 194264.13529561754
+      },
+      {
+        "label": "46\u201360",
+        "from": 46,
+        "to": 60,
+        "n": 735,
+        "coverage": 0.9578231292517007,
+        "mean_width": 195548.30800661875
+      },
+      {
+        "label": "61\u201375",
+        "from": 61,
+        "to": 75,
+        "n": 735,
+        "coverage": 0.9605442176870749,
+        "mean_width": 196695.57548370297
+      },
+      {
+        "label": "76\u201390",
+        "from": 76,
+        "to": 90,
+        "n": 735,
+        "coverage": 0.9605442176870749,
+        "mean_width": 197758.66073867655
+      }
+    ]
+  },
+  "steps": [
+    {
+      "as_of": "2023-02-05",
+      "opening_balance": 15219950.474097034,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 1.8880654129139387,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 90.0,
+      "probability_of_shortfall": 0.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 174
+    },
+    {
+      "as_of": "2023-02-26",
+      "opening_balance": 15485239.762042155,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 1.94842714762359,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 90.0,
+      "probability_of_shortfall": 0.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 181
+    },
+    {
+      "as_of": "2023-03-19",
+      "opening_balance": 16123760.10219137,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 1.8880654129139387,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 90.0,
+      "probability_of_shortfall": 0.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 188
+    },
+    {
+      "as_of": "2023-04-09",
+      "opening_balance": 14601698.32467215,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 1.94842714762359,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 90.0,
+      "probability_of_shortfall": 0.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 205
+    },
+    {
+      "as_of": "2023-04-30",
+      "opening_balance": 13658123.6476833,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 2.150397431370098,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 90.0,
+      "probability_of_shortfall": 0.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 214
+    },
+    {
+      "as_of": "2023-05-21",
+      "opening_balance": 11658717.303414017,
+      "forecast_model": "holt_winters",
+      "conformal_q_hat": 2.487351908181573,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 90.0,
+      "probability_of_shortfall": 0.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 235
+    },
+    {
+      "as_of": "2023-06-11",
+      "opening_balance": 11630446.907004725,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 1.9897589169198273,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 90.0,
+      "probability_of_shortfall": 0.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 238
+    },
+    {
+      "as_of": "2023-07-02",
+      "opening_balance": 11806692.751403682,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 1.909509777633042,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 90.0,
+      "probability_of_shortfall": 0.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 244
+    },
+    {
+      "as_of": "2023-07-23",
+      "opening_balance": 10659089.955977112,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 1.5789086445053382,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 90.0,
+      "probability_of_shortfall": 0.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 252
+    },
+    {
+      "as_of": "2023-08-13",
+      "opening_balance": 9937582.946902737,
+      "forecast_model": "holt_winters",
+      "conformal_q_hat": 2.0872672680176727,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 90.0,
+      "probability_of_shortfall": 0.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 266
+    },
+    {
+      "as_of": "2023-09-03",
+      "opening_balance": 9345873.394167587,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 2.0358721119343572,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 90.0,
+      "probability_of_shortfall": 0.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 273
+    },
+    {
+      "as_of": "2023-09-24",
+      "opening_balance": 8946425.111465909,
+      "forecast_model": "holt_winters",
+      "conformal_q_hat": 2.3001897417164727,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 90.0,
+      "probability_of_shortfall": 0.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 278
+    },
+    {
+      "as_of": "2023-10-15",
+      "opening_balance": 8870802.906990718,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 2.7889554854085996,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 90.0,
+      "probability_of_shortfall": 0.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 286
+    },
+    {
+      "as_of": "2023-11-05",
+      "opening_balance": 9099797.798132144,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 2.2989265262582435,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 89.994,
+      "probability_of_shortfall": 0.006666666666666667,
+      "mc_standard_error": 0.0,
+      "n_receivables": 287
+    },
+    {
+      "as_of": "2023-11-26",
+      "opening_balance": 7577185.182723289,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 2.2727239366660337,
+      "runway_at_risk_days": 77,
+      "conditional_runway_at_risk_days": 75.65806451612903,
+      "probability_of_shortfall": 0.7933333333333333,
+      "mc_standard_error": 0.4717582768150367,
+      "n_receivables": 299
+    },
+    {
+      "as_of": "2023-12-17",
+      "opening_balance": 6678309.482398966,
+      "forecast_model": "holt_winters",
+      "conformal_q_hat": 2.4046030520070505,
+      "runway_at_risk_days": 69,
+      "conditional_runway_at_risk_days": 67.7012987012987,
+      "probability_of_shortfall": 0.9973333333333333,
+      "mc_standard_error": 0.48709365676523314,
+      "n_receivables": 308
+    },
+    {
+      "as_of": "2024-01-07",
+      "opening_balance": 4976907.248822809,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 2.1292166779163924,
+      "runway_at_risk_days": 60,
+      "conditional_runway_at_risk_days": 58.620087336244545,
+      "probability_of_shortfall": 1.0,
+      "mc_standard_error": 0.28344438862479865,
+      "n_receivables": 317
+    },
+    {
+      "as_of": "2024-01-28",
+      "opening_balance": 4366684.526019057,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 2.0376709009947658,
+      "runway_at_risk_days": 63,
+      "conditional_runway_at_risk_days": 56.63483146067416,
+      "probability_of_shortfall": 1.0,
+      "mc_standard_error": 0.4795645987860445,
+      "n_receivables": 313
+    },
+    {
+      "as_of": "2024-02-18",
+      "opening_balance": 3751163.8047208977,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 2.1292166779163924,
+      "runway_at_risk_days": 57,
+      "conditional_runway_at_risk_days": 45.333333333333336,
+      "probability_of_shortfall": 1.0,
+      "mc_standard_error": 0.8001321534133312,
+      "n_receivables": 309
+    },
+    {
+      "as_of": "2024-03-10",
+      "opening_balance": 4344900.783528148,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 2.3930029784487457,
+      "runway_at_risk_days": 67,
+      "conditional_runway_at_risk_days": 54.76875,
+      "probability_of_shortfall": 0.983,
+      "mc_standard_error": 0.6975474571022595,
+      "n_receivables": 310
+    },
+    {
+      "as_of": "2024-03-31",
+      "opening_balance": 3484271.1222148295,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 2.359839793631219,
+      "runway_at_risk_days": 62,
+      "conditional_runway_at_risk_days": 51.022346368715084,
+      "probability_of_shortfall": 1.0,
+      "mc_standard_error": 0.3914535883392149,
+      "n_receivables": 313
+    },
+    {
+      "as_of": "2024-04-21",
+      "opening_balance": 2726860.1111246287,
+      "forecast_model": "holt_winters",
+      "conformal_q_hat": 1.8537475523081974,
+      "runway_at_risk_days": 70,
+      "conditional_runway_at_risk_days": 63.166666666666664,
+      "probability_of_shortfall": 0.9243333333333333,
+      "mc_standard_error": 0.49689693410832764,
+      "n_receivables": 326
+    },
+    {
+      "as_of": "2024-05-12",
+      "opening_balance": 2672914.6740616257,
+      "forecast_model": "holt_winters",
+      "conformal_q_hat": 2.122495114940149,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 89.92666666666666,
+      "probability_of_shortfall": 0.03266666666666666,
+      "mc_standard_error": 0.0,
+      "n_receivables": 334
+    },
+    {
+      "as_of": "2024-06-02",
+      "opening_balance": 3377524.266783842,
+      "forecast_model": "holt_winters",
+      "conformal_q_hat": 1.974170599351711,
+      "runway_at_risk_days": 85,
+      "conditional_runway_at_risk_days": 80.86705202312139,
+      "probability_of_shortfall": 0.17133333333333334,
+      "mc_standard_error": 0.34242180916346676,
+      "n_receivables": 333
+    },
+    {
+      "as_of": "2024-06-23",
+      "opening_balance": 5422033.715873157,
+      "forecast_model": "holt_winters",
+      "conformal_q_hat": 2.26112429408094,
+      "runway_at_risk_days": 66,
+      "conditional_runway_at_risk_days": 62.457317073170735,
+      "probability_of_shortfall": 1.0,
+      "mc_standard_error": 0.3624181062909794,
+      "n_receivables": 333
+    },
+    {
+      "as_of": "2024-07-14",
+      "opening_balance": 6271273.247971777,
+      "forecast_model": "holt_winters",
+      "conformal_q_hat": 1.3325214046373703,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 90.0,
+      "probability_of_shortfall": 0.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 341
+    },
+    {
+      "as_of": "2024-08-04",
+      "opening_balance": 6778217.301197906,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 2.1268269393709014,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 90.0,
+      "probability_of_shortfall": 0.0003333333333333333,
+      "mc_standard_error": 0.0,
+      "n_receivables": 340
+    },
+    {
+      "as_of": "2024-08-25",
+      "opening_balance": 6676704.512605206,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 2.0682312615548213,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 89.98433333333334,
+      "probability_of_shortfall": 0.009333333333333334,
+      "mc_standard_error": 0.0,
+      "n_receivables": 339
+    },
+    {
+      "as_of": "2024-09-15",
+      "opening_balance": 6935311.531782401,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 1.927530548940753,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 89.99766666666666,
+      "probability_of_shortfall": 0.0003333333333333333,
+      "mc_standard_error": 0.0,
+      "n_receivables": 342
+    },
+    {
+      "as_of": "2024-10-06",
+      "opening_balance": 8000618.694082351,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 2.1815909580994792,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 90.0,
+      "probability_of_shortfall": 0.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 340
+    },
+    {
+      "as_of": "2024-10-27",
+      "opening_balance": 7990430.457593042,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 2.1616818252404624,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 90.0,
+      "probability_of_shortfall": 0.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 344
+    },
+    {
+      "as_of": "2024-11-17",
+      "opening_balance": 8100583.850419484,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 2.421339833483632,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 90.0,
+      "probability_of_shortfall": 0.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 350
+    },
+    {
+      "as_of": "2024-12-08",
+      "opening_balance": 9349315.719274586,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 2.361671223102455,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 90.0,
+      "probability_of_shortfall": 0.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 350
+    },
+    {
+      "as_of": "2024-12-29",
+      "opening_balance": 9879826.43114374,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 2.421339833483632,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 90.0,
+      "probability_of_shortfall": 0.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 354
+    },
+    {
+      "as_of": "2025-01-19",
+      "opening_balance": 10206223.649271682,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 2.0287179351594613,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 90.0,
+      "probability_of_shortfall": 0.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 360
+    },
+    {
+      "as_of": "2025-02-09",
+      "opening_balance": 10472072.222399805,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 1.7471099083873547,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 90.0,
+      "probability_of_shortfall": 0.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 363
+    },
+    {
+      "as_of": "2025-03-02",
+      "opening_balance": 9706814.506839465,
+      "forecast_model": "holt_winters",
+      "conformal_q_hat": 1.5204826971899779,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 90.0,
+      "probability_of_shortfall": 0.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 376
+    },
+    {
+      "as_of": "2025-03-23",
+      "opening_balance": 7954292.0440797955,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 1.4571611113541478,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 89.98966666666666,
+      "probability_of_shortfall": 0.012333333333333333,
+      "mc_standard_error": 0.0,
+      "n_receivables": 394
+    },
+    {
+      "as_of": "2025-04-13",
+      "opening_balance": 8089775.703444151,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 1.6292031381947556,
+      "runway_at_risk_days": 90,
+      "conditional_runway_at_risk_days": 89.89633333333333,
+      "probability_of_shortfall": 0.07533333333333334,
+      "mc_standard_error": 0.46779528091859013,
+      "n_receivables": 397
+    },
+    {
+      "as_of": "2025-05-04",
+      "opening_balance": 6969107.856665558,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 1.7329243406540529,
+      "runway_at_risk_days": 72,
+      "conditional_runway_at_risk_days": 71.2547770700637,
+      "probability_of_shortfall": 0.9963333333333333,
+      "mc_standard_error": 0.44923363823677737,
+      "n_receivables": 404
+    },
+    {
+      "as_of": "2025-05-25",
+      "opening_balance": 6219833.868495527,
+      "forecast_model": "holt_winters",
+      "conformal_q_hat": 2.2194313288214813,
+      "runway_at_risk_days": 43,
+      "conditional_runway_at_risk_days": 41.88826815642458,
+      "probability_of_shortfall": 1.0,
+      "mc_standard_error": 0.12483331571911141,
+      "n_receivables": 397
+    },
+    {
+      "as_of": "2025-06-15",
+      "opening_balance": 4619581.894828097,
+      "forecast_model": "holt_winters",
+      "conformal_q_hat": 2.0852828489025885,
+      "runway_at_risk_days": 32,
+      "conditional_runway_at_risk_days": 30.808917197452228,
+      "probability_of_shortfall": 1.0,
+      "mc_standard_error": 0.4445620663773819,
+      "n_receivables": 398
+    },
+    {
+      "as_of": "2025-07-06",
+      "opening_balance": 3422869.922706241,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 1.8144100239445384,
+      "runway_at_risk_days": 25,
+      "conditional_runway_at_risk_days": 23.85549132947977,
+      "probability_of_shortfall": 1.0,
+      "mc_standard_error": 0.1568880739109027,
+      "n_receivables": 403
+    },
+    {
+      "as_of": "2025-07-27",
+      "opening_balance": 1071406.2049896298,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 1.8052691790423865,
+      "runway_at_risk_days": 8,
+      "conditional_runway_at_risk_days": 7.6255506607929515,
+      "probability_of_shortfall": 1.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 412
+    },
+    {
+      "as_of": "2025-08-17",
+      "opening_balance": -847482.8012460098,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 1.8878193586839946,
+      "runway_at_risk_days": 1,
+      "conditional_runway_at_risk_days": 1.0,
+      "probability_of_shortfall": 1.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 428
+    },
+    {
+      "as_of": "2025-09-07",
+      "opening_balance": -828359.3775880672,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 1.9811321149959937,
+      "runway_at_risk_days": 1,
+      "conditional_runway_at_risk_days": 1.0,
+      "probability_of_shortfall": 1.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 429
+    },
+    {
+      "as_of": "2025-09-28",
+      "opening_balance": -2690568.69638272,
+      "forecast_model": "holt_winters",
+      "conformal_q_hat": 1.9690597233384268,
+      "runway_at_risk_days": 1,
+      "conditional_runway_at_risk_days": 1.0,
+      "probability_of_shortfall": 1.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 440
+    },
+    {
+      "as_of": "2025-10-19",
+      "opening_balance": -3450656.209099142,
+      "forecast_model": "sarimax",
+      "conformal_q_hat": 2.0748961789035625,
+      "runway_at_risk_days": 1,
+      "conditional_runway_at_risk_days": 1.0,
+      "probability_of_shortfall": 1.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 436
+    },
+    {
+      "as_of": "2025-11-09",
+      "opening_balance": -4347825.669351047,
+      "forecast_model": "holt_winters",
+      "conformal_q_hat": 2.17943553972962,
+      "runway_at_risk_days": 1,
+      "conditional_runway_at_risk_days": 1.0,
+      "probability_of_shortfall": 1.0,
+      "mc_standard_error": 0.0,
+      "n_receivables": 439
+    }
+  ]
+}
