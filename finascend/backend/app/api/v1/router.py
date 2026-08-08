@@ -47,9 +47,11 @@ from app.services.quant_core.risk_scoring import (
 from app.services.quant_core.synthetic_data import Regime, generate_dataset
 from app.services.backtesting.replay_harness import obligations_as_of
 
+from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.ingestion import router as ingestion_router
 
 router = APIRouter()
+router.include_router(auth_router)
 router.include_router(ingestion_router)
 AUDIT = HashChainLog()
 
@@ -143,16 +145,18 @@ def _simulation(seed: int = DEMO_SEED, regime: str = "adversarial", n: int = 10_
 # auth
 # ---------------------------------------------------------------------------
 
-@router.post("/auth/token", tags=["auth"])
-def issue_demo_token(role: UserRole = Query(UserRole.OWNER)) -> dict[str, Any]:
-    """Issue a demo token. A real deployment would authenticate a user first."""
-    return {
-        "access_token": create_access_token(
-            user_id="demo-user", role=role, business_id="demo-business"
-        ),
-        "token_type": "bearer",
-        "role": role.value,
-    }
+# The former `POST /auth/token?role=owner` endpoint has been REMOVED.
+#
+# It minted a valid owner token for anyone who asked, with no credentials. That
+# was defensible while the API had no user accounts and nothing to protect, but
+# once real sign-in exists it is simply an unauthenticated bypass of it — and
+# this repository is public, so the route would be the first thing anyone
+# tried. Authentication now lives in `endpoints/auth.py`:
+#
+#   POST /auth/signup   create an organisation and its first owner
+#   POST /auth/login    exchange credentials for a token
+#   GET  /auth/me       re-resolve the session from the database
+#   GET  /auth/options  company sizes and the plan each maps to
 
 
 # ---------------------------------------------------------------------------

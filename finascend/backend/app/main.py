@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.v1.router import router as v1_router
+from app.core.security import assert_secret_is_safe
 
 DESCRIPTION = """
 Liquidity-management engine for small businesses.
@@ -32,6 +33,12 @@ Get a token from `POST /api/v1/auth/token` and authorize with it.
 
 
 def create_app() -> FastAPI:
+    # Refuse to boot with the published dev signing key outside development.
+    # Anyone holding it can forge a token for any user in any organisation, and
+    # the fallback value is committed in this public repository — so this is a
+    # hard failure rather than a log line that scrolls past.
+    assert_secret_is_safe()
+
     app = FastAPI(
         title="FinAscend API",
         description=DESCRIPTION,

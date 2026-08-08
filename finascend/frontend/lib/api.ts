@@ -16,24 +16,49 @@
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000/api/v1";
 
-let tokenPromise: Promise<string> | null = null;
+export const TOKEN_STORAGE_KEY = "finascend.token";
 
-async function getToken(): Promise<string> {
-  if (!tokenPromise) {
-    tokenPromise = fetch(`${API_BASE}/auth/token?role=owner`, { method: "POST" })
-      .then((r) => {
-        if (!r.ok) throw new ApiError(`auth failed (HTTP ${r.status})`, r.status);
-        return r.json();
-      })
-      .then((j) => j.access_token as string)
-      .catch((e) => {
-        // Do not cache a failed handshake — the backend may simply not be up
-        // yet, and every later call should retry rather than inherit the error.
-        tokenPromise = null;
-        throw e;
-      });
+/**
+ * The bearer token for the signed-in user.
+ *
+ * Held in a module variable AND mirrored to localStorage. The module variable
+ * is what requests read, so a signed-in session works without touching storage
+ * on every call; localStorage is only how the session survives a refresh.
+ *
+ * STORAGE TRADE-OFF, STATED. localStorage is readable by any script running on
+ * the page, so an XSS bug becomes a token theft. The more secure arrangement is
+ * an httpOnly, SameSite cookie the browser attaches automatically and no script
+ * can read — but that requires the API to set cookies and a CSRF defence to go
+ * with it, since the browser would then attach the credential to cross-site
+ * requests too. That is the right production change and it is a backend change,
+ * not a frontend one. Recorded here rather than left implied.
+ */
+let authToken: string | null = null;
+
+export function setAuthToken(token: string | null): void {
+  authToken = token;
+  if (typeof window === "undefined") return;
+  if (token) window.localStorage.setItem(TOKEN_STORAGE_KEY, token);
+  else window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+}
+
+/** Restore a token saved by a previous session. Returns it, or null. */
+export function loadStoredToken(): string | null {
+  if (typeof window === "undefined") return null;
+  authToken = window.localStorage.getItem(TOKEN_STORAGE_KEY);
+  return authToken;
+}
+
+export function getAuthToken(): string | null {
+  return authToken;
+}
+
+/** Raised when a request needs a session and there isn't one. */
+export class NotAuthenticatedError extends Error {
+  constructor() {
+    super("Not signed in.");
+    this.name = "NotAuthenticatedError";
   }
-  return tokenPromise;
 }
 
 export class ApiError extends Error {
@@ -51,20 +76,20 @@ export class ApiError extends Error {
   }
 }
 
+/** Requests that are legitimately made while signed out. */
+const PUBLIC_PATHS = ["/auth/login", "/auth/signup", "/auth/options"];
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  let token: string;
-  try {
-    token = await getToken();
-  } catch {
-    throw new ApiError(`Cannot reach the FinAscend API at ${API_BASE}.`, 0, {
-      hint: "start_backend",
-    });
+  const isPublic = PUBLIC_PATHS.some((p) => path.startsWith(p));
+  const headers: Record<string, string> = { ...((init?.headers as Record<string, string>) ?? {}) };
+
+  if (!isPublic) {
+    const token = authToken ?? loadStoredToken();
+    if (!token) throw new NotAuthenticatedError();
+    headers.Authorization = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: { Authorization: `Bearer ${token}`, ...(init?.headers ?? {}) },
-  }).catch(() => {
+  const res = await fetch(`${API_BASE}${path}`, { ...init, headers }).catch(() => {
     throw new ApiError(`Cannot reach the FinAscend API at ${API_BASE}.`, 0, {
       hint: "start_backend",
     });
@@ -87,6 +112,13 @@ export const api = {
   get: <T,>(path: string) => request<T>(path),
   post: <T,>(path: string, body?: FormData) =>
     request<T>(path, { method: "POST", body }),
+  /** POST a JSON body. Used by the auth routes, which take JSON not FormData. */
+  postJson: <T,>(path: string, body: unknown) =>
+    request<T>(path, {
+      method: "POST",
+      body: JSON.stringify(body),
+      headers: { "Content-Type": "application/json" },
+    }),
   /**
    * Fetch an authenticated image and hand back an object URL.
    *
@@ -96,14 +128,14 @@ export const api = {
    * intact. The caller MUST revoke the returned URL on unmount.
    */
   objectUrl: async (path: string): Promise<string> => {
-    const token = await getToken();
+    const token = authToken ?? loadStoredToken();
+    if (!token) throw new NotAuthenticatedError();
     const res = await fetch(`${API_BASE}${path}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) throw new ApiError(`image failed (HTTP ${res.status})`, res.status);
     return URL.createObjectURL(await res.blob());
   },
-  token: getToken,
 };
 
 // ===========================================================================
@@ -556,4 +588,84 @@ export interface OcrPipelineResult {
   rejected: { reason: string; why_this_is_correct: string } | null;
   truth?: Record<string, string | number>;
   correct?: Record<string, boolean>;
+}
+
+// ===========================================================================
+// auth / session
+// ===========================================================================
+
+export type CompanySize = "solo" | "small" | "medium" | "large";
+export type PlanName = "essentials" | "professional" | "enterprise";
+
+/**
+ * Capability strings, mirroring `app/core/entitlements.Capability`.
+ *
+ * The UI checks these, never the plan name — so re-packaging the plans is a
+ * backend change alone. The backend is the source of truth; this type only
+ * gives the editor autocomplete over the same vocabulary.
+ */
+export type Capability =
+  | "cash_health"
+  | "action_plan"
+  | "receipt_capture"
+  | "customer_list"
+  | "method_panels"
+  | "scenario_explorer"
+  | "solver_comparison"
+  | "credit_explainability"
+  | "backtest_history"
+  | "audit_log"
+  | "audit_export";
+
+export interface SessionUser {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+}
+
+export interface SessionOrg {
+  id: string;
+  name: string;
+  company_size: CompanySize;
+  company_size_label: string;
+  plan: PlanName;
+  plan_label: string;
+  plan_tagline: string;
+  industry: string | null;
+}
+
+export interface Session {
+  access_token: string;
+  token_type: string;
+  expires_in_minutes: number;
+  user: SessionUser;
+  organization: SessionOrg;
+  capabilities: Capability[];
+}
+
+export interface SignupOptions {
+  company_sizes: {
+    value: CompanySize;
+    label: string;
+    headcount: string;
+    hint: string;
+    plan: PlanName;
+    plan_label: string;
+  }[];
+  plans: {
+    plan: PlanName;
+    label: string;
+    tagline: string;
+    capabilities: Capability[];
+  }[];
+}
+
+export interface SignupPayload {
+  full_name: string;
+  email: string;
+  password: string;
+  company_name: string;
+  company_size: CompanySize;
+  industry?: string | null;
 }

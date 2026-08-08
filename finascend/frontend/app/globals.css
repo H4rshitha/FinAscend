@@ -542,3 +542,144 @@ table.data tfoot td { font-weight: 640; border-bottom: 0; }
   border-radius: var(--radius-sm); border: 1px solid var(--border);
   background: var(--surface);
 }
+
+/* ---------------------------------------------------------------------------
+   auth (sign in / sign up)
+   ------------------------------------------------------------------------ */
+
+/* Two panes on desktop, one on mobile. The aside is the first thing dropped at
+   narrow widths: on a phone the form is the entire job, and marketing copy
+   above it just pushes the password field below the fold. */
+.auth-wrap {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  background: var(--page);
+}
+
+.auth-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--s-3);
+  padding: var(--s-7) clamp(var(--s-4), 6vw, var(--s-7));
+  max-width: 560px;
+  width: 100%;
+  margin-left: auto;
+}
+
+.auth-brand {
+  display: flex; align-items: center; gap: var(--s-2);
+  font-weight: 680; letter-spacing: -0.02em;
+  margin-bottom: var(--s-4);
+}
+
+.auth-title { font-size: var(--t-31); margin-bottom: var(--s-1); }
+.auth-lede { color: var(--ink-secondary); margin-bottom: var(--s-4); }
+
+.auth-error {
+  display: flex; align-items: flex-start; gap: var(--s-2);
+  background: var(--critical-bg);
+  border: 1px solid #f0c4c0;
+  color: var(--critical);
+  padding: var(--s-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--t-14);
+  margin-bottom: var(--s-2);
+}
+.auth-error svg { margin-top: 2px; flex-shrink: 0; }
+
+.auth-submit { width: 100%; margin-top: var(--s-2); min-height: 44px; }
+
+.auth-switch {
+  margin-top: var(--s-4);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--border);
+  font-size: var(--t-14);
+  color: var(--ink-secondary);
+}
+.link-btn {
+  padding: 0; min-height: 0; border: 0; background: none;
+  font: inherit; font-weight: 620; color: var(--brand-700);
+  cursor: pointer; text-decoration: underline;
+}
+
+.field-legend {
+  font-size: var(--t-12); font-weight: 620; color: var(--ink-muted);
+  text-transform: uppercase; letter-spacing: 0.05em;
+  padding: 0; margin-bottom: var(--s-2);
+}
+.size-set { border: 0; padding: 0; margin: var(--s-2) 0 0; display: grid; gap: var(--s-2); }
+
+/* The whole row is the hit target, not just the radio dot — a 14px circle is
+   below every touch-target guideline and this is the one control on the page
+   that decides what the account can do. */
+.size-option {
+  display: flex; align-items: flex-start; gap: var(--s-3);
+  padding: var(--s-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+  min-height: 56px;
+}
+.size-option:hover { background: var(--surface-hover); }
+.size-option.is-selected {
+  border-color: var(--brand-700);
+  background: var(--brand-50);
+  box-shadow: inset 0 0 0 1px var(--brand-700);
+}
+.size-option input { margin-top: 3px; accent-color: var(--brand-700); flex-shrink: 0; }
+.size-main { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+.size-label { font-weight: 620; font-size: var(--t-16); }
+.size-head { font-size: var(--t-12); color: var(--ink-muted); }
+.size-hint { font-size: var(--t-12); color: var(--ink-secondary); }
+.size-plan {
+  font-size: var(--t-12); font-weight: 620;
+  color: var(--brand-800); background: var(--brand-100);
+  padding: 3px 8px; border-radius: 999px; white-space: nowrap; flex-shrink: 0;
+}
+
+.auth-aside {
+  background: linear-gradient(160deg, var(--brand-900), var(--brand-700));
+  color: #eaf5f4;
+  padding: var(--s-7) clamp(var(--s-4), 5vw, var(--s-7));
+  display: flex; flex-direction: column; justify-content: center; gap: var(--s-4);
+}
+.auth-aside h2 { font-size: var(--t-31); color: #fff; max-width: 16ch; }
+.auth-aside p { color: #cfe6e4; max-width: 46ch; }
+.auth-points { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--s-3); }
+.auth-points li { display: flex; gap: var(--s-2); align-items: flex-start; font-size: var(--t-14); color: #eaf5f4; }
+.auth-points svg { margin-top: 3px; flex-shrink: 0; color: var(--brand-300); }
+.auth-note {
+  margin-top: var(--s-2);
+  padding: var(--s-3);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #cfe6e4;
+}
+.auth-note .pill { background: rgba(255,255,255,0.14); color: #eaf5f4; border-color: transparent; }
+
+@media (max-width: 900px) {
+  .auth-wrap { grid-template-columns: 1fr; }
+  .auth-card { margin: 0 auto; padding-top: var(--s-6); padding-bottom: var(--s-6); }
+  .auth-aside { display: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   account menu in the top bar
+   ------------------------------------------------------------------------ */
+
+.acct { display: flex; align-items: center; gap: var(--s-3); flex-shrink: 0; }
+.acct-id { display: flex; flex-direction: column; line-height: 1.25; text-align: right; }
+.acct-name { font-size: var(--t-14); font-weight: 620; }
+.acct-org { font-size: var(--t-12); color: var(--ink-muted); }
+.acct-plan {
+  font-size: var(--t-12); font-weight: 620;
+  color: var(--brand-800); background: var(--brand-100);
+  padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+}
+@media (max-width: 780px) {
+  .acct-id { display: none; }
+}

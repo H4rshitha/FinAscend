@@ -32,6 +32,17 @@ yarn-error.log*
 *.onnx
 .EasyOCR/
 
+# --- Database ---
+# NEVER commit these. The SQLite file holds real user rows including Argon2
+# password hashes and email addresses, and this repository is public. Offline
+# cracking a leaked hash dump is a real attack, not a theoretical one.
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+
 # --- Environment / secrets ---
 .env
 .env.local

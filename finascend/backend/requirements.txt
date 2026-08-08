@@ -33,6 +33,18 @@ uvicorn[standard]==0.34.0
 pydantic==2.10.4
 python-jose[cryptography]==3.3.0
 python-multipart==0.0.20
+email-validator==2.2.0          # pydantic EmailStr
+
+# --- persistence / auth ---
+# SQLite is the default engine and needs no driver — it ships with Python. The
+# ORM is engine-agnostic, so moving to Postgres is `pip install "psycopg[binary]"`
+# plus a FINASCEND_DATABASE_URL change, with no model or query edits.
+SQLAlchemy==2.0.36
+alembic==1.14.0
+# Argon2id: OWASP's current first choice, and memory-hard, so GPU cracking of a
+# leaked hash dump buys far less than it does against bcrypt. Used directly
+# rather than via passlib, which is unmaintained and breaks against bcrypt 4.x.
+argon2-cffi==23.1.0
 
 # --- tests ---
 pytest==8.3.4

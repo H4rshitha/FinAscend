@@ -19,6 +19,7 @@
 
 import { ReactNode, useEffect, useId, useRef, useState } from "react";
 import { ApiError, API_BASE } from "@/lib/api";
+import { isAuthFailure, useAuth } from "@/lib/auth";
 
 // ---------------------------------------------------------------------------
 // data fetching
@@ -39,6 +40,7 @@ export function useApi<T>(fn: () => Promise<T>, deps: unknown[] = []): Async<T> 
   const [nonce, setNonce] = useState(0);
   const fnRef = useRef(fn);
   fnRef.current = fn;
+  const { signOut } = useAuth();
 
   useEffect(() => {
     let live = true;
@@ -47,7 +49,17 @@ export function useApi<T>(fn: () => Promise<T>, deps: unknown[] = []): Async<T> 
     fnRef
       .current()
       .then((d) => live && (setData(d), setError(null)))
-      .catch((e) => live && setError(e instanceof ApiError ? e : new ApiError(String(e))))
+      .catch((e) => {
+        if (!live) return;
+        // An expired or revoked token would otherwise leave the user staring at
+        // a page of identical error panels with no way to recover. Dropping the
+        // session lets the guard do its job and send them to sign in once.
+        if (isAuthFailure(e)) {
+          signOut();
+          return;
+        }
+        setError(e instanceof ApiError ? e : new ApiError(String(e)));
+      })
       .finally(() => live && setLoading(false));
     return () => {
       live = false;
